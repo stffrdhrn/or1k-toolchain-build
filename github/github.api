@@ -1,0 +1,76 @@
+#!/bin/bash
+
+usage() {
+  echo "please define github_token or create ~/.github.api file and put it there before running"
+
+  exit 1
+}
+
+## Init Globals ##
+if [[ -f $HOME/.github.api ]] ; then
+  . $HOME/.github.api
+fi
+[[ -z $github_token ]]  && usage
+
+## Helpers
+
+github_post() {
+  declare json_file=$1; shift
+  declare url=$1; shift
+
+  curl -H "Authorization: token $github_token" \
+    -H "Accept: application/vnd.github.v3+json" \
+    -X POST \
+    -d @${json_file} \
+    -o post-out.json \
+    "https://api.github.com${url}"
+
+  return 0
+}
+
+github_upload() {
+  declare data_file=$1; shift
+
+  declare mime=`file --brief --mime-type $data_file`
+  declare filename=`basename $data_file`
+
+  declare asset_path=`grep upload_url post-out.json | grep -o "/repos/.*/assets"`
+
+  if [[ -z $asset_path ]]; then
+    echo "Cannot find asset path in post-out.json to upload to.  Did you release first?"
+    return 1
+  fi
+
+  curl -H "Authorization: token $github_token" \
+    -H "Accept: application/vnd.github.v3+json" \
+    -H "Content-Type: $mime" \
+    -X POST \
+    -v \
+    --data-binary @${data_file} \
+    -o upload-out.json \
+    "https://uploads.github.com${asset_path}?name=${filename}"
+
+  return 0
+}
+
+github_release() {
+  declare project=$1; shift
+  declare name=$1; shift
+  declare commitish=$1; shift
+  declare body=$1; shift
+
+  cat >release.json <<EOF
+{
+  "tag_name": "${name}",
+  "target_commitish": "${commitish}",
+  "name": "${name}",
+  "body": "${body}",
+  "draft": true,
+  "prerelease": false
+}
+EOF
+
+  github_post "release.json" "/repos/${project}/releases"
+
+}
+
