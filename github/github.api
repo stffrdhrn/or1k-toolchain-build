@@ -12,6 +12,10 @@ if [[ -f $HOME/.github.api ]] ; then
 fi
 [[ -z $github_token ]]  && usage
 
+if [[ -z $github_dir ]] ; then
+  github_dir=`dirname $0`
+fi
+
 ## Helpers
 
 github_post() {
@@ -22,7 +26,7 @@ github_post() {
     -H "Accept: application/vnd.github.v3+json" \
     -X POST \
     -d @${json_file} \
-    -o post-out.json \
+    -o ${github_dir}/post-out.json \
     "https://api.github.com${url}"
 
   return 0
@@ -34,7 +38,12 @@ github_upload() {
   declare mime=`file --brief --mime-type $data_file`
   declare filename=`basename $data_file`
 
-  declare asset_path=`grep upload_url post-out.json | grep -o "/repos/.*/assets"`
+  declare asset_path=`grep upload_url ${github_dir}/post-out.json | grep -o "/repos/.*/assets"`
+
+  if [[ ! -f $data_file ]] ; then
+    echo "The file $data_file does not exist."
+    return 1
+  fi
 
   if [[ -z $asset_path ]]; then
     echo "Cannot find asset path in post-out.json to upload to.  Did you release first?"
@@ -45,9 +54,8 @@ github_upload() {
     -H "Accept: application/vnd.github.v3+json" \
     -H "Content-Type: $mime" \
     -X POST \
-    -v \
     --data-binary @${data_file} \
-    -o upload-out.json \
+    -o ${github_dir}/upload-out.json \
     "https://uploads.github.com${asset_path}?name=${filename}"
 
   return 0
@@ -59,7 +67,7 @@ github_release() {
   declare commitish=$1; shift
   declare body=$1; shift
 
-  cat >release.json <<EOF
+  cat >${github_dir}/release.json <<EOF
 {
   "tag_name": "${name}",
   "target_commitish": "${commitish}",
@@ -70,7 +78,7 @@ github_release() {
 }
 EOF
 
-  github_post "release.json" "/repos/${project}/releases"
+  github_post "${github_dir}/release.json" "/repos/${project}/releases"
 
 }
 

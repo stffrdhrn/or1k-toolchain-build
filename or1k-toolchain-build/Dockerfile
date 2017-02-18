@@ -1,15 +1,4 @@
 FROM debian
-LABEL maintainer Stafford Hornr <shorne@gmail.com>
-
-# Default build versions
-ENV GCC_VERSION=5.4.0
-ENV BINUTILS_VERSION=2.26
-ENV NEWLIB_VERSION=2.4.0
-ENV MUSL_VERSION=1.1.16
-ENV LINUX_HEADERS_VERSION=4.5
-ENV GMP_VERSION=6.1.0
-ENV MAKEOPTS="-j5"
-
 RUN apt-get update && apt-get install -y \
  bison \
  build-essential \
@@ -21,6 +10,17 @@ RUN apt-get update && apt-get install -y \
  texinfo \
  wget \
  zlib1g-dev
+
+LABEL maintainer Stafford Hornr <shorne@gmail.com>
+
+# Default build versions
+ENV GCC_VERSION=5.4.0
+ENV BINUTILS_VERSION=2.26
+ENV NEWLIB_VERSION=2.4.0
+ENV MUSL_VERSION=1.1.16
+ENV LINUX_HEADERS_VERSION=4.5
+ENV GMP_VERSION=6.1.0
+ENV MAKEOPTS="-j5"
 
 # Make volume mount points for output + cache of tarballs
 RUN mkdir -p /opt/crosstool && mkdir -p /opt/crossbuild/cache
