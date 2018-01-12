@@ -11,13 +11,13 @@ RUN apt-get update && apt-get install -y \
  wget \
  zlib1g-dev
 
-LABEL maintainer Stafford Hornr <shorne@gmail.com>
+LABEL maintainer Stafford Horne <shorne@gmail.com>
 
 # Default build versions
-ENV GCC_VERSION=5.4.0
-ENV BINUTILS_VERSION=2.26
+ENV GCC_VERSION=7.2.0
+ENV BINUTILS_VERSION=2.29
 ENV NEWLIB_VERSION=2.4.0
-ENV MUSL_VERSION=1.1.16
+ENV MUSL_VERSION=1.1.18
 ENV LINUX_HEADERS_VERSION=4.5
 ENV GMP_VERSION=6.1.0
 ENV MAKEOPTS="-j5"

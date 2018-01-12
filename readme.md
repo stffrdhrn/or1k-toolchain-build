@@ -11,7 +11,7 @@ docker build -t or1k-toolchain-build or1k-toolchain-build/
 Running the build, binaries will be outputted to crosstool volume.
 
 ```
-# The location where you have tarballs, do they dont need to be
+# The location where you have tarballs, so they dont need to be
 # downloaded every time you build
 CACHEDIR=/home/shorne/work/docker/volumes/src
 # The location where you want your output to go
