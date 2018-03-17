@@ -1,7 +1,7 @@
-# Openrisc build and release scripts
+# OpenRISC build and release scripts
 
 This project contains a set of scripts and docker images for building toolchain
-releases for the openrisc platform.  Once the builds are done it will upload
+releases for the OpenRISC platform.  Once the builds are done it will upload
 release artifacts to [github](https://github.com/openrisc/or1k-gcc/releases).
 
 If you are not a release maintainer you probably don't need this.  You can just
@@ -9,10 +9,12 @@ binaries from our release page mentioned above.
 
 ## Building the toolchain
 
+*Prerequisites* the build takes about 20GB and 40 minutes on a skylake core i5
+
 First configure the tool versions you want by editing `or1k-toolchain-build/Dockerfile`
 
 Next build the docker image.  This will setup a sandboxed docker image which
-will run builds for openrisc newlib, musl and nolib (for kernel builds).
+will run builds for OpenRISC newlib, musl and nolib (for kernel builds).
 
 ```
 docker build -t or1k-toolchain-build or1k-toolchain-build/
