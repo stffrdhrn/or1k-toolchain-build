@@ -85,8 +85,6 @@ mkdir elf; cd elf
       --disable-libgui \
       --disable-rda \
       --disable-sid \
-      --disable-sim \
-      --disable-gdb \
       --with-sysroot \
       --disable-newlib \
       --disable-libgloss \
