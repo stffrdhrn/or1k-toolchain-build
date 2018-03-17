@@ -2,7 +2,7 @@
 
 set -ex
 
-GCC_VERSION=5.4.0
+GCC_VERSION=7.2.0
 
 # The github originization we want to create the or1k-gcc release at
 GITHUB_ORG=openrisc
@@ -12,8 +12,8 @@ GIT_REMOTE=or1k
 GIT_HOME=$HOME/work/openrisc/or1k-gcc
 
 # Dry run examples
-#GITHUB_ORG=stffrdhrn
-#GIT_REMOTE=shorne
+GITHUB_ORG=stffrdhrn
+GIT_REMOTE=shorne
 
 DIR=`dirname $0`
 pushd $DIR ; DIR=$PWD ; popd
@@ -25,8 +25,6 @@ base_tag="gcc-${GCC_VERSION//./_}-release"
 
 branch="or1k-${GCC_VERSION}"
 tag="or1k-${GCC_VERSION}-${release}"
-musl_branch="musl-${GCC_VERSION}"
-musl_tag="or1k-musl-${GCC_VERSION}-${release}"
 
 # Create and push git tag
 git_tagnpush() {
@@ -52,7 +50,6 @@ git_tagnpush() {
   popd
 }
 
-git_tagnpush ${musl_branch} ${musl_tag} ${GIT_REMOTE}
 git_tagnpush ${branch} ${tag} ${GIT_REMOTE}
 
 # Create release
