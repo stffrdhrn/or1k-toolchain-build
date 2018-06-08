@@ -17,9 +17,9 @@ package_dir()
 }
 
 pushd /opt/crossbuild/output
-  package_dir "or1k-linux"
-  package_dir "or1k-linux-musl"
-  package_dir "or1k-elf"
+  [ $NOLIB_ENABLED ] && package_dir "or1k-linux"
+  [ $MUSL_ENABLED ] && package_dir "or1k-linux-musl"
+  [ $NEWLIB_ENABLED ] && package_dir "or1k-elf"
   wait
 
   mv *.tar* /opt/crosstool

@@ -21,6 +21,9 @@ ENV MUSL_VERSION=1.1.19
 ENV LINUX_HEADERS_VERSION=4.15
 ENV GMP_VERSION=6.1.0
 ENV MAKEOPTS="-j5"
+ENV NOLIB_ENABLED=1
+ENV MUSL_ENABLED=1
+ENV NEWLIB_ENABLED=1
 
 # Make volume mount points for output + cache of tarballs
 RUN mkdir -p /opt/crosstool && mkdir -p /opt/crossbuild/cache

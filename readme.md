@@ -9,18 +9,19 @@ binaries from our release page mentioned above.
 
 ## Building the toolchain
 
-*Prerequisites* the build takes about 20GB and 40 minutes on a skylake core i5
+*Prerequisites*
+ - the build takes about 20GB and 40 minutes on a skylake core i5
 
-First configure the tool versions you want by editing `or1k-toolchain-build/Dockerfile`
-
-Next build the docker image.  This will setup a sandboxed docker image which
+First build the docker image.  This will setup a sandboxed docker image which
 will run builds for OpenRISC newlib, musl and nolib (for kernel builds).
 
 ```
 docker build -t or1k-toolchain-build or1k-toolchain-build/
 ```
 
-Running the build, binaries will be outputted to crosstool volume.
+Running the build, binaries will be outputted the `/opt/crosstool` volume.  You
+can choose versions of GCC, BINUTILS, NEWLIB, MUSL.  The GCC and BINUTILS
+versions will be downloaded from the openrisc github repo's.
 
 ```
 # The location where you have tarballs, so they dont need to be
@@ -30,10 +31,22 @@ CACHEDIR=/home/shorne/work/docker/volumes/src
 OUTPUTDIR=/home/shorne/work/docker/volumes/crosstool
 
 docker run -it --rm \
+  -e NEWLIB_ENABLED= \
+  -e NOLIB_ENABLED= \
+  -e GCC_VERSION=9.0.0-20180604 \
+  -e BINUTILS_VERSION=2.30.51-20180605 \
   -v ${OUTPUTDIR}:/opt/crosstool:Z \
   -v ${CACHEDIR}:/opt/crossbuild/cache:Z \
   or1k-toolchain-build
 ```
+
+## Disabling builds
+
+You can disable builds by undefining any of these variables, by default all
+builds are enabled.
+ - `NEWLIB_ENABLED` - enabled/disable the newlib build
+ - `NOLIB_ENABLED` - enabled/disable the nolib build
+ - `MUSL_ENABLED` - enable/disable the musl build
 
 ## Signing your work
 
