@@ -57,6 +57,9 @@ EOF
       ./build --toolchain openrisc
     cd ..
   cd ..
+
+  # Cleanup after build
+  rm -rf linux-nolib
 fi
 
 # Build linux-musl GCC toolchain
@@ -91,6 +94,9 @@ EOF
       make install
     cd ..
   cd ..
+
+  # Cleanup after build
+  rm -rf linux-musl
 fi
 
 # Build baremetal/newlib GCC
@@ -147,4 +153,7 @@ if [ $NEWLIB_ENABLED ] ; then
       make install
     cd ..
   cd ..
+
+  # Cleanup after build
+  rm -rf elf
 fi
