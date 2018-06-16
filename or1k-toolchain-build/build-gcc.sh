@@ -75,12 +75,14 @@ if [ $MUSL_ENABLED ] ; then
       cp $GMP_TARBALL sources/
       cp $LINUX_HEADERS_TARBALL sources/
 
-      # Pupulate sha1 hashes that don't exist, not secure!
+      # Populate sha1 hashes that don't exist, not secure!
       cd sources/
         for tarball in * ; do
           [ -f "../hashes/${tarball}.sha1" ] || sha1sum $tarball > "../hashes/${tarball}.sha1"
         done
       cd ..
+      # Touch sources so make thinks we downloaded after sha1
+      touch sources/*
       cat <<EOF >config.mak
 TARGET = or1k-linux-musl
 BINUTILS_VER = ${BINUTILS_VERSION}

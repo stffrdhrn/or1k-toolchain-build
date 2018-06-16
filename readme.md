@@ -33,8 +33,8 @@ OUTPUTDIR=/home/shorne/work/docker/volumes/crosstool
 docker run -it --rm \
   -e NEWLIB_ENABLED= \
   -e NOLIB_ENABLED= \
-  -e GCC_VERSION=9.0.0-20180604 \
-  -e BINUTILS_VERSION=2.30.51-20180605 \
+  -e GCC_VERSION=9.0.0 \
+  -e BINUTILS_VERSION=2.30.51 \
   -v ${OUTPUTDIR}:/opt/crosstool:Z \
   -v ${CACHEDIR}:/opt/crossbuild/cache:Z \
   or1k-toolchain-build
