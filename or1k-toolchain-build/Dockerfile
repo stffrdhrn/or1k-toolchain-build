@@ -9,7 +9,11 @@ RUN apt-get update && apt-get install -y \
  libmpfr-dev \
  texinfo \
  wget \
- zlib1g-dev
+ zlib1g-dev \
+ dejagnu \
+ libncursesw5-dev \
+ libncurses5-dev \
+ libglib2.0-0
 
 LABEL maintainer Stafford Horne <shorne@gmail.com>
 
@@ -21,6 +25,8 @@ ENV MUSL_VERSION=1.1.19
 ENV LINUX_HEADERS_VERSION=4.15
 ENV GMP_VERSION=6.1.0
 ENV MAKEOPTS="-j5"
+ENV SRC_CLEANUP=1
+ENV TEST_ENABLED=1
 ENV NOLIB_ENABLED=1
 ENV MUSL_ENABLED=1
 ENV NEWLIB_ENABLED=1

@@ -40,13 +40,27 @@ docker run -it --rm \
   or1k-toolchain-build
 ```
 
-## Disabling builds
+## Environment Parameters
+
+You can change the build behavior without rebuilding your docker image by
+passing in different environment veriables.  These can be used to change
+toolchain versions or enable and disable features.
+
+### Disabling builds
 
 You can disable builds by undefining any of these variables, by default all
 builds are enabled.
- - `NEWLIB_ENABLED` - enabled/disable the newlib build
- - `NOLIB_ENABLED` - enabled/disable the nolib build
- - `MUSL_ENABLED` - enable/disable the musl build
+ - `NEWLIB_ENABLED` - (default `1`) enable/disable the newlib build
+ - `NOLIB_ENABLED` - (default `1`) enable/disable the nolib build
+ - `MUSL_ENABLED` - (default `1) enable/disable the musl build
+
+### Misc Parameters
+
+ - `SRC_CLEANUP` - (default `1`) enable/disable deleting of source after build
+   completes.  Disable this if you are debugging a toolchain build issue.  Enable
+   if if you are trying to save disk space during the build.
+ - `TEST_ENABLED` - (default `1`) enable/disable dejagnu tesing of toolchains
+   and saving output to the `/opt/crosstool` output volume.
 
 ## Signing your work
 

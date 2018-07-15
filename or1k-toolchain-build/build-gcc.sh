@@ -10,15 +10,17 @@ GCC_URL=https://github.com/stffrdhrn/gcc/archive/or1k-${GCC_VERSION}.tar.gz
 BINUTILS_URL=https://github.com/stffrdhrn/binutils-gdb/archive/or1k-${BINUTILS_VERSION}.tar.gz
 LINUX_HEADERS_URL=http://www.kernel.org/pub/linux/kernel/v4.x/linux-${LINUX_HEADERS_VERSION}.tar.xz
 GMP_URL=https://gmplib.org/download/gmp/gmp-${GMP_VERSION}.tar.bz2
+QEMU_URL=http://shorne.noip.me/downloads/or1k-qemu-2.12.50.tar.xz
 
 GCC_TARBALL=$CACHE_DIR/`basename $GCC_URL`
 BINUTILS_TARBALL=$CACHE_DIR/`basename $BINUTILS_URL`
 LINUX_HEADERS_TARBALL=$CACHE_DIR/`basename $LINUX_HEADERS_URL`
 GMP_TARBALL=$CACHE_DIR/`basename $GMP_URL`
+QEMU_TARBALL=$CACHE_DIR/`basename $QEMU_URL`
 
 check_and_download()
 {
-  declare url=$1 ; shift
+  typeset url=$1 ; shift
 
   filename=`basename $url`
   if [ ! -f $CACHE_DIR/$filename ] ; then
@@ -26,10 +28,42 @@ check_and_download()
   fi
 }
 
+run_make_check()
+{
+  typeset tag=$1 ; shift
+
+  typeset arc_date=`date -u +%Y%m%d`
+  typeset version="${GCC_VERSION}-${arc_date}"
+
+  make check-gcc
+
+  for tool in "gcc" "g++"; do
+    cp gcc/testsuite/${tool}/${tool}.log /opt/crosstool/${tag}-${tool}-${version}.log
+    cp gcc/testsuite/${tool}/${tool}.sum /opt/crosstool/${tag}-${tool}-${version}.sum
+  done
+}
+
 check_and_download $GCC_URL
 check_and_download $BINUTILS_URL
 check_and_download $LINUX_HEADERS_URL
 check_and_download $GMP_URL
+
+# Setup testing infra
+
+if [ $TEST_ENABLED ] ; then
+  check_and_download $QEMU_URL
+
+  if [ ! -d "or1k-qemu" ] ; then
+    tar -xf $QEMU_TARBALL
+  fi
+
+  if [ ! -d "or1k-utils" ] ; then
+    git clone https://github.com/stffrdhrn/or1k-utils.git
+  fi
+
+  export PATH=$PWD/or1k-qemu/bin:$PATH
+  export DEJAGNU=$PWD/or1k-utils/site.exp
+fi
 
 # Build nolib GCC
 
@@ -59,7 +93,7 @@ EOF
   cd ..
 
   # Cleanup after build
-  rm -rf linux-nolib
+  [ $SRC_CLEANUP ] && rm -rf linux-nolib
 fi
 
 # Build linux-musl GCC toolchain
@@ -94,11 +128,22 @@ OUTPUT = /opt/crossbuild/output/or1k-linux-musl
 EOF
       make -j 4
       make install
+
+      if [ $TEST_ENABLED ] ; then
+        # Fixup since ld-musl-or1k.so.1 links to /lib/libc.so which doesn't work
+        # via qemu-or1k symlink resolution
+        pushd /opt/crossbuild/output/or1k-linux-musl/or1k-linux-musl/lib
+          ln -sf libc.so ld-musl-or1k.so.1
+        popd
+
+        cd build/local/or1k-linux-musl/obj_gcc/
+        run_make_check "or1k-linux-musl"
+      fi
     cd ..
   cd ..
 
   # Cleanup after build
-  rm -rf linux-musl
+  [ $SRC_CLEANUP ] && rm -rf linux-musl
 fi
 
 # Build baremetal/newlib GCC
@@ -153,9 +198,13 @@ if [ $NEWLIB_ENABLED ] ; then
       --with-newlib
       make $MAKEOPTS
       make install
+
+      if [ $TEST_ENABLED ] ; then
+        run_make_check "or1k-elf"
+      fi
     cd ..
   cd ..
 
   # Cleanup after build
-  rm -rf elf
+  [ $SRC_CLEANUP ] && rm -rf elf
 fi
