@@ -18,6 +18,11 @@ LINUX_HEADERS_TARBALL=$CACHE_DIR/`basename $LINUX_HEADERS_URL`
 GMP_TARBALL=$CACHE_DIR/`basename $GMP_URL`
 QEMU_TARBALL=$CACHE_DIR/`basename $QEMU_URL`
 
+# Dates and version used for artifacts
+arc_date=`date -u +%Y%m%d`
+version="${GCC_VERSION}-${arc_date}"
+
+
 check_and_download()
 {
   typeset url=$1 ; shift
@@ -32,15 +37,45 @@ run_make_check()
 {
   typeset tag=$1 ; shift
 
-  typeset arc_date=`date -u +%Y%m%d`
-  typeset version="${GCC_VERSION}-${arc_date}"
-
   make check-gcc
 
-  for tool in "gcc" "g++"; do
-    cp gcc/testsuite/${tool}/${tool}.log /opt/crosstool/${tag}-${tool}-${version}.log
-    cp gcc/testsuite/${tool}/${tool}.sum /opt/crosstool/${tag}-${tool}-${version}.sum
-  done
+  gzip -c gcc/testsuite/gcc/gcc.log > /opt/crosstool/${tag}-gcc-${version}.log.gz
+  cp gcc/testsuite/gcc/gcc.sum /opt/crosstool/${tag}-gcc-${version}.sum
+  # Rename g++ to gxx for easier web urls
+  gzip -c gcc/testsuite/g++/g++.log > /opt/crosstool/${tag}-gxx-${version}.log.gz
+  cp gcc/testsuite/g++/g++.sum /opt/crosstool/${tag}-gxx-${version}.sum
+}
+gen_release_notes()
+{
+  {
+
+    echo "## OpenRISC GCC Toolchain $version"
+    echo "These toolchains were built using the "
+    echo "[or1k-toolchain-build](https://github.com/stffrdhrn/or1k-toolchain-build) "
+    echo " environment configured with the following versions: "
+    echo " - gcc : ${GCC_VERSION}"
+    echo " - binutils/gdb : ${BINUTILS_VERSION}"
+    echo " - linux headers : ${LINUX_HEADERS_VERSION}"
+    echo " - gmp : ${GMP_VERSION}"
+    if [ $NEWLIB_ENABLED ] ; then
+      echo " - newlib (elf toolchain) : git"
+    fi
+    if [ $MUSL_ENABLED ] ; then
+      echo " - musl (linux-musl toolchain) : ${MUSL_VERSION}"
+    fi
+    echo
+    if [ $TEST_ENABLED ] ; then
+    echo "## Test Results"
+      echo "Tests for toolchains were run using dejagnu board configs found in"
+      echo "[or1k-utils](https://github.com/stffrdhrn/or1k-utils)."
+      echo "The test results for the toolchains are as follows:"
+      echo
+      echo "\`\`\`"
+      grep -h -A10 "Summary ==" /opt/crosstool/or1k-*${version}.sum
+      echo "\`\`\`"
+    fi
+
+  } > /opt/crosstool/relnotes-${version}.md
 }
 
 check_and_download $GCC_URL
@@ -109,6 +144,11 @@ if [ $MUSL_ENABLED ] ; then
       cp $GMP_TARBALL sources/
       cp $LINUX_HEADERS_TARBALL sources/
 
+      PREFIX=/opt/crossbuild/output/or1k-linux-musl
+
+      OLD_PATH=$PATH
+      export PATH=$PREFIX/bin:$PATH
+
       # Populate sha1 hashes that don't exist, not secure!
       cd sources/
         for tarball in * ; do
@@ -124,7 +164,7 @@ GCC_VER = ${GCC_VERSION}
 MUSL_VER = ${MUSL_VERSION}
 LINUX_VER = ${LINUX_HEADERS_VERSION}
 
-OUTPUT = /opt/crossbuild/output/or1k-linux-musl
+OUTPUT = ${PREFIX}
 EOF
       make -j 4
       make install
@@ -139,6 +179,7 @@ EOF
         cd build/local/or1k-linux-musl/obj_gcc/
         run_make_check "or1k-linux-musl"
       fi
+      export PATH=$OLD_PATH
     cd ..
   cd ..
 
@@ -150,12 +191,13 @@ fi
 
 if [ $NEWLIB_ENABLED ] ; then
   mkdir elf; cd elf
-    tar -xvf /$GCC_TARBALL
-    tar -xvf $BINUTILS_TARBALL
+    tar -xf $GCC_TARBALL
+    tar -xf $BINUTILS_TARBALL
     git clone https://github.com/openrisc/newlib.git
 
     PREFIX=/opt/crossbuild/output/or1k-elf
 
+    OLD_PATH=$PATH
     export PATH=$PREFIX/bin:$PATH
 
     mkdir build-binutils; cd build-binutils
@@ -202,9 +244,12 @@ if [ $NEWLIB_ENABLED ] ; then
       if [ $TEST_ENABLED ] ; then
         run_make_check "or1k-elf"
       fi
+      export PATH=$OLD_PATH
     cd ..
   cd ..
 
   # Cleanup after build
   [ $SRC_CLEANUP ] && rm -rf elf
 fi
+
+gen_release_notes
