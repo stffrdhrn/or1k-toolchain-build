@@ -31,10 +31,14 @@ CACHEDIR=/home/shorne/work/docker/volumes/src
 OUTPUTDIR=/home/shorne/work/docker/volumes/crosstool
 
 docker run -it --rm \
-  -e NEWLIB_ENABLED= \
-  -e NOLIB_ENABLED= \
+  -e MUSL_ENABLED=1 \
+  -e NEWLIB_ENABLED=1 \
+  -e NOLIB_ENABLED=1 \
   -e GCC_VERSION=9.0.0 \
-  -e BINUTILS_VERSION=2.30.51 \
+  -e BINUTILS_VERSION=2.31.52 \
+  -e LINUX_HEADERS_VERSION=4.19.1 \
+  -e MUSL_VERSION=1.1.20 \
+  -e GMP_VERSION=6.1.2 \
   -v ${OUTPUTDIR}:/opt/crosstool:Z \
   -v ${CACHEDIR}:/opt/crossbuild/cache:Z \
   or1k-toolchain-build
@@ -46,13 +50,24 @@ You can change the build behavior without rebuilding your docker image by
 passing in different environment veriables.  These can be used to change
 toolchain versions or enable and disable features.
 
-### Disabling builds
+### Disabling Builds
 
 You can disable builds by undefining any of these variables, by default all
 builds are enabled.
  - `NEWLIB_ENABLED` - (default `1`) enable/disable the newlib build
  - `NOLIB_ENABLED` - (default `1`) enable/disable the nolib build
  - `MUSL_ENABLED` - (default `1) enable/disable the musl build
+
+### Changing Versions
+
+The source versions of components pulled into the toolchain can be adjusted.
+
+ - `GCC_VERSION` - (default `7.2.0`) `or1k-{version}` tag downloaded from github.com/stffrdhrn/gcc
+ - `BINUTILS_VERSION` - (default `2.30`) `or1k-{version}` tag downloaded from github.com/stffrdhrn/binutils-gdb
+ - `NEWLIB_VERSION` - (default `2.4.0`) **Not Used** newlib is downloaded from GIT now
+ - `MUSL_VERSION` - (default `1.1.19`) version of musl downloaded from the musl release server
+ - `LINUX_HEADERS_VERSION` - (default `4.15`) version of linux kernel, used for headers, downloaded from kernel.org
+ - `GMP_VERSION` - (default `6.1.0`) version of GNU Multiple Precision Arithmetic Library (GMP) downloaded from gmplib.org
 
 ### Misc Parameters
 
