@@ -176,8 +176,9 @@ EOF
           ln -sf libc.so ld-musl-or1k.so.1
         popd
 
-        cd build/local/or1k-linux-musl/obj_gcc/
-        run_make_check "or1k-linux-musl"
+        pushd build/local/or1k-linux-musl/obj_gcc/
+          run_make_check "or1k-linux-musl"
+        popd
       fi
       export PATH=$OLD_PATH
     cd ..

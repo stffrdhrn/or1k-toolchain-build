@@ -2,7 +2,7 @@
 
 set -ex
 
-GCC_VERSION=9.0.0
+GCC_VERSION=9.0.1
 
 # The github originization we want to create the or1k-gcc release at
 GITHUB_ORG=openrisc
