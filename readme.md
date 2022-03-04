@@ -34,11 +34,12 @@ docker run -it --rm \
   -e MUSL_ENABLED=1 \
   -e NEWLIB_ENABLED=1 \
   -e NOLIB_ENABLED=1 \
-  -e GCC_VERSION=9.0.1 \
-  -e BINUTILS_VERSION=2.32.51 \
-  -e LINUX_HEADERS_VERSION=4.19.1 \
-  -e MUSL_VERSION=1.1.20 \
-  -e GMP_VERSION=6.1.2 \
+  -e GCC_VERSION=11.0.1 \
+  -e BINUTILS_VERSION=2.36.50 \
+  -e NEWLIB_VERSION=4.2.0 \
+  -e LINUX_HEADERS_VERSION=5.12.2 \
+  -e MUSL_VERSION=1.2.2 \
+  -e GMP_VERSION=6.2.1 \
   -v ${OUTPUTDIR}:/opt/crosstool:Z \
   -v ${CACHEDIR}:/opt/crossbuild/cache:Z \
   or1k-toolchain-build
@@ -62,9 +63,9 @@ builds are enabled.
 
 The source versions of components pulled into the toolchain can be adjusted.
 
- - `GCC_VERSION` - (default `7.2.0`) `or1k-{version}` tag downloaded from github.com/stffrdhrn/gcc
- - `BINUTILS_VERSION` - (default `2.30`) `or1k-{version}` tag downloaded from github.com/stffrdhrn/binutils-gdb
- - `NEWLIB_VERSION` - (default `2.4.0`) **Not Used** newlib is downloaded from GIT now
+ - `GCC_VERSION` - (default `7.2.0`) `or1k-{version}` tag downloaded from github.com/openrisc/or1k-gcc
+ - `BINUTILS_VERSION` - (default `2.30`) `or1k-{version}` tag downloaded from github.com/openrisc/binutils-gdb
+ - `NEWLIB_VERSION` - (default `2.4.0`) `or1k-{version}` tag downloaded from github.com/openrisc/newlib
  - `MUSL_VERSION` - (default `1.1.19`) version of musl downloaded from the musl release server
  - `LINUX_HEADERS_VERSION` - (default `4.15`) version of linux kernel, used for headers, downloaded from kernel.org
  - `GMP_VERSION` - (default `6.1.0`) version of GNU Multiple Precision Arithmetic Library (GMP) downloaded from gmplib.org

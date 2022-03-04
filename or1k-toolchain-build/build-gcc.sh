@@ -6,14 +6,16 @@ set -ex
 
 CACHE_DIR=/opt/crossbuild/cache/
 
-GCC_URL=https://github.com/stffrdhrn/gcc/archive/or1k-${GCC_VERSION}.tar.gz
-BINUTILS_URL=https://github.com/stffrdhrn/binutils-gdb/archive/or1k-${BINUTILS_VERSION}.tar.gz
-LINUX_HEADERS_URL=http://www.kernel.org/pub/linux/kernel/v4.x/linux-${LINUX_HEADERS_VERSION}.tar.xz
+GCC_URL=https://github.com/openrisc/or1k-gcc/archive/or1k-${GCC_VERSION}.tar.gz
+BINUTILS_URL=https://github.com/openrisc/binutils-gdb/archive/or1k-${BINUTILS_VERSION}.tar.gz
+NEWLIB_URL=https://github.com/openrisc/newlib/archive/or1k-${NEWLIB_VERSION}.tar.gz
+LINUX_HEADERS_URL=http://www.kernel.org/pub/linux/kernel/v5.x/linux-${LINUX_HEADERS_VERSION}.tar.xz
 GMP_URL=https://gmplib.org/download/gmp/gmp-${GMP_VERSION}.tar.bz2
 QEMU_URL=http://shorne.noip.me/downloads/or1k-qemu-2.12.50.tar.xz
 
 GCC_TARBALL=$CACHE_DIR/`basename $GCC_URL`
 BINUTILS_TARBALL=$CACHE_DIR/`basename $BINUTILS_URL`
+NEWLIB_TARBALL=$CACHE_DIR/`basename $NEWLIB_URL`
 LINUX_HEADERS_TARBALL=$CACHE_DIR/`basename $LINUX_HEADERS_URL`
 GMP_TARBALL=$CACHE_DIR/`basename $GMP_URL`
 QEMU_TARBALL=$CACHE_DIR/`basename $QEMU_URL`
@@ -53,12 +55,12 @@ gen_release_notes()
     echo "These toolchains were built using the "
     echo "[or1k-toolchain-build](https://github.com/stffrdhrn/or1k-toolchain-build) "
     echo " environment configured with the following versions: "
-    echo " - gcc : ${GCC_VERSION}"
-    echo " - binutils/gdb : ${BINUTILS_VERSION}"
+    echo " - openrisc/or1k-gcc : ${GCC_VERSION}"
+    echo " - openrisc/binutils-gdb : ${BINUTILS_VERSION}"
     echo " - linux headers : ${LINUX_HEADERS_VERSION}"
     echo " - gmp : ${GMP_VERSION}"
     if [ $NEWLIB_ENABLED ] ; then
-      echo " - newlib (elf toolchain) : git"
+      echo " - openrisc/newlib (elf toolchain) : ${NEWLIB_VERSION}"
     fi
     if [ $MUSL_ENABLED ] ; then
       echo " - musl (linux-musl toolchain) : ${MUSL_VERSION}"
@@ -70,9 +72,9 @@ gen_release_notes()
       echo "[or1k-utils](https://github.com/stffrdhrn/or1k-utils)."
       echo "The test results for the toolchains are as follows:"
       echo
-      echo "\`\`\`"
+      echo '```'
       grep -h -A10 "Summary ==" /opt/crosstool/or1k-*${version}.sum
-      echo "\`\`\`"
+      echo '```'
     fi
 
   } > /opt/crosstool/relnotes-${version}.md
@@ -80,6 +82,7 @@ gen_release_notes()
 
 check_and_download $GCC_URL
 check_and_download $BINUTILS_URL
+check_and_download $NEWLIB_URL
 check_and_download $LINUX_HEADERS_URL
 check_and_download $GMP_URL
 
@@ -114,7 +117,7 @@ if [ $NOLIB_ENABLED ] ; then
       # create the buildall build config
       cat <<EOF >config
 BINUTILS_SRC=/opt/crossbuild/linux-nolib/binutils-gdb-or1k-${BINUTILS_VERSION}
-GCC_SRC=/opt/crossbuild/linux-nolib/gcc-or1k-${GCC_VERSION}
+GCC_SRC=/opt/crossbuild/linux-nolib/or1k-gcc-or1k-${GCC_VERSION}
 PREFIX=/opt/crossbuild/output/or1k-linux
 EXTRA_BINUTILS_CONF=""
 EXTRA_GCC_CONF=""
@@ -166,7 +169,7 @@ LINUX_VER = ${LINUX_HEADERS_VERSION}
 
 OUTPUT = ${PREFIX}
 EOF
-      make -j 4
+      make $MAKEOPTS
       make install
 
       if [ $TEST_ENABLED ] ; then
@@ -194,7 +197,7 @@ if [ $NEWLIB_ENABLED ] ; then
   mkdir elf; cd elf
     tar -xf $GCC_TARBALL
     tar -xf $BINUTILS_TARBALL
-    git clone https://github.com/openrisc/newlib.git
+    tar -xf $NEWLIB_TARBALL
 
     PREFIX=/opt/crossbuild/output/or1k-elf
 
@@ -219,7 +222,7 @@ if [ $NEWLIB_ENABLED ] ; then
     cd ..
 
     mkdir build-gcc-stage1; cd build-gcc-stage1
-      ../gcc-or1k-${GCC_VERSION}/configure --target=or1k-elf --prefix=$PREFIX \
+      ../or1k-gcc-or1k-${GCC_VERSION}/configure --target=or1k-elf --prefix=$PREFIX \
       --enable-languages=c \
       --disable-shared \
       --disable-libssp
@@ -228,13 +231,13 @@ if [ $NEWLIB_ENABLED ] ; then
     cd ..
 
     mkdir build-newlib; cd build-newlib
-      ../newlib/configure --target=or1k-elf --prefix=$PREFIX
+      ../newlib-or1k-${NEWLIB_VERSION}/configure --target=or1k-elf --prefix=$PREFIX
       make $MAKEOPTS
       make install
     cd ..
 
     mkdir build-gcc-stage2; cd build-gcc-stage2
-      ../gcc-or1k-${GCC_VERSION}/configure --target=or1k-elf --prefix=$PREFIX \
+      ../or1k-gcc-or1k-${GCC_VERSION}/configure --target=or1k-elf --prefix=$PREFIX \
       --enable-languages=c,c++ \
       --disable-shared \
       --disable-libssp \
