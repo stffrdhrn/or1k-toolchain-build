@@ -6,15 +6,24 @@ set -ex
 
 CACHE_DIR=/opt/crossbuild/cache/
 
-GCC_URL=https://github.com/openrisc/or1k-gcc/archive/or1k-${GCC_VERSION}.tar.gz
-BINUTILS_URL=https://github.com/openrisc/binutils-gdb/archive/or1k-${BINUTILS_VERSION}.tar.gz
-NEWLIB_URL=https://github.com/openrisc/newlib/archive/or1k-${NEWLIB_VERSION}.tar.gz
-LINUX_HEADERS_URL=http://www.kernel.org/pub/linux/kernel/v5.x/linux-${LINUX_HEADERS_VERSION}.tar.xz
-GMP_URL=https://gmplib.org/download/gmp/gmp-${GMP_VERSION}.tar.bz2
-QEMU_URL=http://shorne.noip.me/downloads/or1k-qemu-2.12.50.tar.xz
+OR1K_GCC_URL=https://github.com/openrisc/or1k-gcc/archive/${GCC_VERSION}.tar.gz
+OR1K_BINUTILS_URL=https://github.com/openrisc/binutils-gdb/archive/${BINUTILS_VERSION}.tar.gz
+OR1K_NEWLIB_URL=https://github.com/openrisc/newlib/archive/${NEWLIB_VERSION}.tar.gz
+
+GNU_SITE=https://ftpmirror.gnu.org/gnu/
+GCC_URL=${GNU_SITE}/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.xz
+BINUTILS_URL=${GNU_SITE}/binutils/binutils-${BINUTILS_VERSION}.tar.xz
+GDB_URL=${GNU_SITE}/gdb/gdb-${GDB_VERSION}.tar.xz
+GMP_URL=${GNU_SITE}/gmp/gmp-${GMP_VERSION}.tar.xz
+GLIBC_URL=${GNU_SITE}/glibc/glibc-${GLIBC_VERSION}.tar.xz
+
+NEWLIB_URL=ftp://sourceware.org/pub/newlib/newlib-${NEWLIB_VERSION}.tar.gz
+LINUX_HEADERS_URL=https://cdn.kernel.org/pub/linux/kernel/v${LINUX_HEADERS_VERSION:0:1}.x/linux-${LINUX_HEADERS_VERSION}.tar.xz
+QEMU_URL=https://download.qemu.org/qemu-${QEMU_VERSION}.tar.xz
 
 GCC_TARBALL=$CACHE_DIR/`basename $GCC_URL`
 BINUTILS_TARBALL=$CACHE_DIR/`basename $BINUTILS_URL`
+GDB_TARBALL=$CACHE_DIR/`basename $GDB_URL`
 NEWLIB_TARBALL=$CACHE_DIR/`basename $NEWLIB_URL`
 LINUX_HEADERS_TARBALL=$CACHE_DIR/`basename $LINUX_HEADERS_URL`
 GMP_TARBALL=$CACHE_DIR/`basename $GMP_URL`
@@ -23,7 +32,6 @@ QEMU_TARBALL=$CACHE_DIR/`basename $QEMU_URL`
 # Dates and version used for artifacts
 arc_date=`date -u +%Y%m%d`
 version="${GCC_VERSION}-${arc_date}"
-
 
 check_and_download()
 {
@@ -83,23 +91,34 @@ gen_release_notes()
 check_and_download $GCC_URL
 check_and_download $BINUTILS_URL
 check_and_download $NEWLIB_URL
+check_and_download $GDB_URL
+check_and_download $GLIBC_URL
 check_and_download $LINUX_HEADERS_URL
 check_and_download $GMP_URL
 
 # Setup testing infra
 
 if [ $TEST_ENABLED ] ; then
-  check_and_download $QEMU_URL
-
-  if [ ! -d "or1k-qemu" ] ; then
-    tar -xf $QEMU_TARBALL
-  fi
 
   if [ ! -d "or1k-utils" ] ; then
     git clone https://github.com/stffrdhrn/or1k-utils.git
   fi
 
-  export PATH=$PWD/or1k-qemu/bin:$PATH
+  check_and_download $QEMU_URL
+
+  QEMU_PREFIX=$PWD/or1k-qemu
+  if [ ! -d "$QEMU_PREFIX" ] ; then
+    tar -xf $QEMU_TARBALL
+    mkdir qemu-${QEMU_VERSION}/build
+    cd qemu-${QEMU_VERSION}/build
+       ../../or1k-utils/qemu/config.qemu --prefix=$QEMU_PREFIX
+       make $MAKEOPTS
+       make install
+       $QEMU_PREFIX/bin/qemu-or1k
+    cd ../..
+  fi
+
+  export PATH=$QEMU_PREFIX/bin:$PATH
   export DEJAGNU=$PWD/or1k-utils/site.exp
 fi
 
@@ -116,8 +135,8 @@ if [ $NOLIB_ENABLED ] ; then
 
       # create the buildall build config
       cat <<EOF >config
-BINUTILS_SRC=/opt/crossbuild/linux-nolib/binutils-gdb-or1k-${BINUTILS_VERSION}
-GCC_SRC=/opt/crossbuild/linux-nolib/or1k-gcc-or1k-${GCC_VERSION}
+BINUTILS_SRC=/opt/crossbuild/linux-nolib/binutils-${BINUTILS_VERSION}
+GCC_SRC=/opt/crossbuild/linux-nolib/gcc-${GCC_VERSION}
 PREFIX=/opt/crossbuild/output/or1k-linux
 EXTRA_BINUTILS_CONF=""
 EXTRA_GCC_CONF=""
@@ -138,9 +157,8 @@ fi
 
 if [ $MUSL_ENABLED ] ; then
   mkdir linux-musl; cd linux-musl
-    git clone https://github.com/stffrdhrn/musl-cross-make.git
+    git clone https://github.com/richfelker/musl-cross-make.git
     cd musl-cross-make
-      git checkout or1k
       mkdir sources/
       cp $GCC_TARBALL sources/
       cp $BINUTILS_TARBALL sources/
@@ -197,6 +215,7 @@ if [ $NEWLIB_ENABLED ] ; then
   mkdir elf; cd elf
     tar -xf $GCC_TARBALL
     tar -xf $BINUTILS_TARBALL
+    tar -xf $GDB_TARBALL
     tar -xf $NEWLIB_TARBALL
 
     PREFIX=/opt/crossbuild/output/or1k-elf
@@ -205,7 +224,7 @@ if [ $NEWLIB_ENABLED ] ; then
     export PATH=$PREFIX/bin:$PATH
 
     mkdir build-binutils; cd build-binutils
-      ../binutils-gdb-or1k-${BINUTILS_VERSION}/configure --target=or1k-elf --prefix=$PREFIX \
+      ../binutils-${BINUTILS_VERSION}/configure --target=or1k-elf --prefix=$PREFIX \
       --disable-itcl \
       --disable-tk \
       --disable-tcl \
@@ -216,13 +235,14 @@ if [ $NEWLIB_ENABLED ] ; then
       --with-sysroot \
       --disable-newlib \
       --disable-libgloss \
-      --with-system-zlib
+      --with-system-zlib \
+      --with-python=python3.11
       make $MAKEOPTS
       make install
     cd ..
 
     mkdir build-gcc-stage1; cd build-gcc-stage1
-      ../or1k-gcc-or1k-${GCC_VERSION}/configure --target=or1k-elf --prefix=$PREFIX \
+      ../gcc-${GCC_VERSION}/configure --target=or1k-elf --prefix=$PREFIX \
       --enable-languages=c \
       --disable-shared \
       --disable-libssp
@@ -231,13 +251,13 @@ if [ $NEWLIB_ENABLED ] ; then
     cd ..
 
     mkdir build-newlib; cd build-newlib
-      ../newlib-or1k-${NEWLIB_VERSION}/configure --target=or1k-elf --prefix=$PREFIX
+      ../newlib-${NEWLIB_VERSION}/configure --target=or1k-elf --prefix=$PREFIX
       make $MAKEOPTS
       make install
     cd ..
 
     mkdir build-gcc-stage2; cd build-gcc-stage2
-      ../or1k-gcc-or1k-${GCC_VERSION}/configure --target=or1k-elf --prefix=$PREFIX \
+      ../gcc-${GCC_VERSION}/configure --target=or1k-elf --prefix=$PREFIX \
       --enable-languages=c,c++ \
       --disable-shared \
       --disable-libssp \

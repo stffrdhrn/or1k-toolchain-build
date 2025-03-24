@@ -32,14 +32,17 @@ OUTPUTDIR=/home/shorne/work/docker/volumes/crosstool
 
 docker run -it --rm \
   -e MUSL_ENABLED=1 \
+  -e GLIBC_ENABLED=1 \
   -e NEWLIB_ENABLED=1 \
   -e NOLIB_ENABLED=1 \
-  -e GCC_VERSION=11.0.1 \
-  -e BINUTILS_VERSION=2.36.50 \
-  -e NEWLIB_VERSION=4.2.0 \
-  -e LINUX_HEADERS_VERSION=5.12.2 \
-  -e MUSL_VERSION=1.2.2 \
-  -e GMP_VERSION=6.2.1 \
+  -e GCC_VERSION=14.2.0 \
+  -e BINUTILS_VERSION=2.43.1 \
+  -e NEWLIB_VERSION=4.5.0.20241231 \
+  -e GLIBC_VERSION=2.41 \
+  -e MUSL_VERSION=1.2.5 \
+  -e LINUX_HEADERS_VERSION=6.13.8 \
+  -e GMP_VERSION=6.3.0 \
+  -e QEMU_VERSION=9.2.2 \
   -v ${OUTPUTDIR}:/opt/crosstool:Z \
   -v ${CACHEDIR}:/opt/crossbuild/cache:Z \
   or1k-toolchain-build
@@ -63,12 +66,24 @@ builds are enabled.
 
 The source versions of components pulled into the toolchain can be adjusted.
 
- - `GCC_VERSION` - (default `7.2.0`) `or1k-{version}` tag downloaded from github.com/openrisc/or1k-gcc
- - `BINUTILS_VERSION` - (default `2.30`) `or1k-{version}` tag downloaded from github.com/openrisc/binutils-gdb
- - `NEWLIB_VERSION` - (default `2.4.0`) `or1k-{version}` tag downloaded from github.com/openrisc/newlib
- - `MUSL_VERSION` - (default `1.1.19`) version of musl downloaded from the musl release server
- - `LINUX_HEADERS_VERSION` - (default `4.15`) version of linux kernel, used for headers, downloaded from kernel.org
- - `GMP_VERSION` - (default `6.1.0`) version of GNU Multiple Precision Arithmetic Library (GMP) downloaded from gmplib.org
+ - `GCC_VERSION` - (default `14.2.0`) version downloaded from: https://ftpmirror.gnu.org/gnu/gcc/gcc-14.2.0/gcc-14.2.0.tar.xz
+ - `BINUTILS_VERSION` - (default `2.43.1`) version downloaded from: https://ftpmirror.gnu.org/gnu//binutils/binutils-2.43.1.tar.xz
+ - `NEWLIB_VERSION` - (default `4.5.0.20241231`) version downloaded from: ftp://sourceware.org/pub/newlib/newlib-4.5.0.20241231.tar.xz
+ - `GDB_VERSION` - (default `16.2`) version downloaded from: https://ftpmirror.gnu.org/gnu/gdb/gdb-16.2.tar.xz
+ - `GLIBC_VERSION` - (default `2.41`) version downloaded from: https://ftpmirror.gnu.org/gnu/glibc/glibc-2.41.tar.xz
+ - `MUSL_VERSION` - (default `1.2.5`) version of musl downloaded from: https://musl.libc.org/releases/musl-1.2.5.tar.gz
+ - `LINUX_HEADERS_VERSION` - (default `6.13.8`) version of linux kernel, used for headers, downloaded from: https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.13.8.tar.xz
+ - `GMP_VERSION` - (default `6.3.0`) version of GNU Multiple Precision Arithmetic Library (GMP) downloaded from: https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz
+ - `QEMU_VERSION` - (default `9.2.2`) version of QEMU for running tests downloaded from: https://download.qemu.org/qemu-9.2.2.tar.xz
+
+Git tags, special `or1k-{version}` versions are supported to allow downloading and building from
+OpenRISC development repo's.  This may be useful when a feature needs to be released before
+an official release is made upstream. This is supported for:
+
+ - `GCC_VERSION` - `or1k-{version}` tag downloaded from github.com/openrisc/or1k-gcc
+ - `BINUTILS_VERSION` - `or1k-{version}` tag downloaded from github.com/openrisc/binutils-gdb
+ - `NEWLIB_VERSION` - `or1k-{version}` tag downloaded from github.com/openrisc/newlib
+ - `GLIBC_VERSION` - `or1k-{version}` tag downloaded from github.com/openrisc/or1k-glibc
 
 ### Misc Parameters
 
