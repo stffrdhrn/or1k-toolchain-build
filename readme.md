@@ -76,9 +76,11 @@ The source versions of components pulled into the toolchain can be adjusted.
  - `GMP_VERSION` - (default `6.3.0`) version of GNU Multiple Precision Arithmetic Library (GMP) downloaded from: https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz
  - `QEMU_VERSION` - (default `9.2.2`) version of QEMU for running tests downloaded from: https://download.qemu.org/qemu-9.2.2.tar.xz
 
-Git tags, special `or1k-{version}` versions are supported to allow downloading and building from
-OpenRISC development repo's.  This may be useful when a feature needs to be released before
-an official release is made upstream. This is supported for:
+**Note the below is currently not supported, we may add this back if development builds are needed, but for now we recomment stable builds**
+
+Git tags, special `or1k-{version}` versions allow downloading and building from
+OpenRISC development repo's.  This may be useful when a feature needs to be
+released before an official release is made upstream. This is supported for:
 
  - `GCC_VERSION` - `or1k-{version}` tag downloaded from github.com/openrisc/or1k-gcc
  - `BINUTILS_VERSION` - `or1k-{version}` tag downloaded from github.com/openrisc/binutils-gdb
