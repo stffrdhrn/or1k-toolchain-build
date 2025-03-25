@@ -45,9 +45,10 @@ check_and_download()
 
 run_make_check()
 {
+  typeset gcc_dir=$1 ; shift
   typeset tag=$1 ; shift
 
-  make check-gcc
+  make -C ${gcc_dir} check-gcc
 
   gzip -c gcc/testsuite/gcc/gcc.log > /opt/crosstool/${tag}-gcc-${version}.log.gz
   cp gcc/testsuite/gcc/gcc.sum /opt/crosstool/${tag}-gcc-${version}.sum
@@ -197,9 +198,7 @@ EOF
           ln -sf libc.so ld-musl-or1k.so.1
         popd
 
-        pushd build/local/or1k-linux-musl/obj_gcc/
-          run_make_check "or1k-linux-musl"
-        popd
+        run_make_check "./build/local/or1k-linux-musl/obj_gcc/" "or1k-linux-musl"
       fi
       export PATH=$OLD_PATH
     cd ..
@@ -215,61 +214,28 @@ if [ $NEWLIB_ENABLED ] ; then
   mkdir elf; cd elf
     tar -xf $GCC_TARBALL
     tar -xf $BINUTILS_TARBALL
-    tar -xf $GDB_TARBALL
     tar -xf $NEWLIB_TARBALL
+    tar -xf $GDB_TARBALL
 
     PREFIX=/opt/crossbuild/output/or1k-elf
 
     OLD_PATH=$PATH
     export PATH=$PREFIX/bin:$PATH
 
-    mkdir build-binutils; cd build-binutils
-      ../binutils-${BINUTILS_VERSION}/configure --target=or1k-elf --prefix=$PREFIX \
-      --disable-itcl \
-      --disable-tk \
-      --disable-tcl \
-      --disable-winsup \
-      --disable-gdbtk \
-      --disable-rda \
-      --disable-sid \
-      --with-sysroot \
-      --disable-newlib \
-      --disable-libgloss \
-      --with-system-zlib \
-      --with-python=python3.11
-      make $MAKEOPTS
-      make install
-    cd ..
+    export NOTIFY=n
+    export INSTALLDIR=$PREFIX
+    export BUILDDIR=$PWD
+    export GCC_SRC=$BUILDDIR/gcc-${GCC_VERSION}
+    export BINUTILS_SRC=$BUILDDIR/binutils-${BINUTILS_VERSION}
+    export GDB_SRC=$BUILDDIR/gdb-${GDB_VERSION}
+    export NEWLIB_SRC=$BUILDDIR/newlib-${NEWLIB_VERSION}
+    ../or1k-utils/toolchains/newlib.build
+    cat ./log/newlib-build.log
 
-    mkdir build-gcc-stage1; cd build-gcc-stage1
-      ../gcc-${GCC_VERSION}/configure --target=or1k-elf --prefix=$PREFIX \
-      --enable-languages=c \
-      --disable-shared \
-      --disable-libssp
-      make $MAKOPTS
-      make install
-    cd ..
-
-    mkdir build-newlib; cd build-newlib
-      ../newlib-${NEWLIB_VERSION}/configure --target=or1k-elf --prefix=$PREFIX
-      make $MAKEOPTS
-      make install
-    cd ..
-
-    mkdir build-gcc-stage2; cd build-gcc-stage2
-      ../gcc-${GCC_VERSION}/configure --target=or1k-elf --prefix=$PREFIX \
-      --enable-languages=c,c++ \
-      --disable-shared \
-      --disable-libssp \
-      --with-newlib
-      make $MAKEOPTS
-      make install
-
-      if [ $TEST_ENABLED ] ; then
-        run_make_check "or1k-elf"
-      fi
-      export PATH=$OLD_PATH
-    cd ..
+    if [ $TEST_ENABLED ] ; then
+      run_make_check "./build-gcc" "or1k-elf"
+    fi
+    export PATH=$OLD_PATH
   cd ..
 
   # Cleanup after build
