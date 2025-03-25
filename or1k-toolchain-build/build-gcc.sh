@@ -40,6 +40,7 @@ check_and_download()
   filename=`basename $url`
   if [ ! -f $CACHE_DIR/$filename ] ; then
     wget --directory-prefix=$CACHE_DIR $url
+    sha1sum $CACHE_DIR/$filename > $CACHE_DIR/$filename.sha1
   fi
 }
 
@@ -64,12 +65,13 @@ gen_release_notes()
     echo "These toolchains were built using the "
     echo "[or1k-toolchain-build](https://github.com/stffrdhrn/or1k-toolchain-build) "
     echo " environment configured with the following versions: "
-    echo " - openrisc/or1k-gcc : ${GCC_VERSION}"
-    echo " - openrisc/binutils-gdb : ${BINUTILS_VERSION}"
+    echo " - gcc : ${GCC_VERSION}"
+    echo " - binutils : ${BINUTILS_VERSION}"
+    echo " - gdb : ${GDB_VERSION}"
     echo " - linux headers : ${LINUX_HEADERS_VERSION}"
     echo " - gmp : ${GMP_VERSION}"
     if [ $NEWLIB_ENABLED ] ; then
-      echo " - openrisc/newlib (elf toolchain) : ${NEWLIB_VERSION}"
+      echo " - newlib (elf toolchain) : ${NEWLIB_VERSION}"
     fi
     if [ $MUSL_ENABLED ] ; then
       echo " - musl (linux-musl toolchain) : ${MUSL_VERSION}"
@@ -97,13 +99,15 @@ check_and_download $GLIBC_URL
 check_and_download $LINUX_HEADERS_URL
 check_and_download $GMP_URL
 
+# Get latest build and config scripts
+
+if [ ! -d "or1k-utils" ] ; then
+  git clone https://github.com/stffrdhrn/or1k-utils.git
+fi
+
 # Setup testing infra
 
 if [ $TEST_ENABLED ] ; then
-
-  if [ ! -d "or1k-utils" ] ; then
-    git clone https://github.com/stffrdhrn/or1k-utils.git
-  fi
 
   check_and_download $QEMU_URL
 
@@ -161,24 +165,19 @@ if [ $MUSL_ENABLED ] ; then
     git clone https://github.com/richfelker/musl-cross-make.git
     cd musl-cross-make
       mkdir sources/
-      cp $GCC_TARBALL sources/
-      cp $BINUTILS_TARBALL sources/
-      cp $GMP_TARBALL sources/
-      cp $LINUX_HEADERS_TARBALL sources/
+
+      # Copy our cached tarballs and checksums
+      for tarball in $GCC_TARBALL $BINUTILS_TARBALL $GMP_TARBALL $LINUX_HEADERS_TARBALL; do
+        cp $tarball.sha1 hashes/
+        # Copy sources second so make thinks we downloaded after sha1
+        cp $tarball sources/
+      done
 
       PREFIX=/opt/crossbuild/output/or1k-linux-musl
 
       OLD_PATH=$PATH
       export PATH=$PREFIX/bin:$PATH
 
-      # Populate sha1 hashes that don't exist, not secure!
-      cd sources/
-        for tarball in * ; do
-          [ -f "../hashes/${tarball}.sha1" ] || sha1sum $tarball > "../hashes/${tarball}.sha1"
-        done
-      cd ..
-      # Touch sources so make thinks we downloaded after sha1
-      touch sources/*
       cat <<EOF >config.mak
 TARGET = or1k-linux-musl
 BINUTILS_VER = ${BINUTILS_VERSION}
