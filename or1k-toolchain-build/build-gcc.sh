@@ -221,25 +221,32 @@ if [ $NEWLIB_ENABLED ] ; then
     tar -xf $NEWLIB_TARBALL
     tar -xf $GDB_TARBALL
 
-    PREFIX=/opt/crossbuild/output/or1k-elf
-
-    OLD_PATH=$PATH
-    export PATH=$PREFIX/bin:$PATH
-
+    # Setup overrides for newlib.config
     export NOTIFY=n
-    export INSTALLDIR=$PREFIX
     export BUILDDIR=$PWD
     export GCC_SRC=$BUILDDIR/gcc-${GCC_VERSION}
     export BINUTILS_SRC=$BUILDDIR/binutils-${BINUTILS_VERSION}
     export GDB_SRC=$BUILDDIR/gdb-${GDB_VERSION}
     export NEWLIB_SRC=$BUILDDIR/newlib-${NEWLIB_VERSION}
-    ../or1k-utils/toolchains/newlib.build
-    cat ./log/newlib-build.log
 
-    if [ $TEST_ENABLED ] ; then
-      run_make_check "./build-gcc" "or1k-elf"
-    fi
-    export PATH=$OLD_PATH
+    # build newlib plain and multicore variants
+    for target in or1k-elf or1k-elfmc; do
+      PREFIX=/opt/crossbuild/output/${target}
+
+      OLD_PATH=$PATH
+      export PATH=$PREFIX/bin:$PATH
+
+     # Setup target specific overrides for newlib.config
+      export INSTALLDIR=$PREFIX
+      export CROSS=${target}
+      ../or1k-utils/toolchains/newlib.build
+      cat ./log/newlib-build.log
+
+      if [ $TEST_ENABLED ] ; then
+        run_make_check "./build-gcc" "${target}"
+      fi
+      export PATH=$OLD_PATH
+    done
   cd ..
 
   # Cleanup after build
@@ -253,27 +260,31 @@ if [ $GLIBC_ENABLED ] ; then
     tar -xf $LINUX_HEADERS_TARBALL
     tar -xf $GLIBC_TARBALL
 
-    TARGET=or1k-${VENDOR}-linux-gnu
-    PREFIX=/opt/crossbuild/output/${TARGET}
-
-    OLD_PATH=$PATH
-    export PATH=$PREFIX/bin:$PATH
-
+    # Setup overrides for glibc.config
     export NOTIFY=n
-    export INSTALLDIR=$PREFIX
     export BUILDDIR=$PWD
     export GCC_SRC=$BUILDDIR/gcc-${GCC_VERSION}
     export BINUTILS_SRC=$BUILDDIR/binutils-${BINUTILS_VERSION}
     export LINUX_SRC=$BUILDDIR/linux-${LINUX_HEADERS_VERSION}
     export GLIBC_SRC=$BUILDDIR/glibc-${GLIBC_VERSION}
-    export CROSS=$TARGET
-    ../or1k-utils/toolchains/glibc.build
-    cat ./log/build.log
 
-    if [ $TEST_ENABLED ] ; then
-      run_make_check "./build-gcc" "${TARGET}"
-    fi
-    export PATH=$OLD_PATH
+    for target in or1k-${VENDOR}-linux-gnu or1k-${VENDOR}-linux-gnuhf; do
+      PREFIX=/opt/crossbuild/output/${target}
+
+      OLD_PATH=$PATH
+      export PATH=$PREFIX/bin:$PATH
+
+      # Setup target specific overrides for glibc.config
+      export INSTALLDIR=$PREFIX
+      export CROSS=${target}
+      ../or1k-utils/toolchains/glibc.build
+      cat ./log/build.log
+
+      if [ $TEST_ENABLED ] ; then
+        run_make_check "./build-gcc" "${target}"
+      fi
+      export PATH=$OLD_PATH
+    done
   cd ..
 
   # Cleanup after build
