@@ -94,6 +94,8 @@ released before an official release is made upstream. This is supported for:
    if if you are trying to save disk space during the build.
  - `TEST_ENABLED` - (default `1`) enable/disable dejagnu tesing of toolchains
    and saving output to the `/opt/crosstool` output volume.
+ - `VENDOR` - (default `none`) the vendor name to use in the toolchain triplet. i.e. `or1k-none-linux-gnu`.
+   Change this if you want to identify your release uniquely.
 
 ## Signing your work
 

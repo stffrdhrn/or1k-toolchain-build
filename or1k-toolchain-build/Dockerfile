@@ -18,7 +18,9 @@ RUN apt-get update && apt-get install -y \
  python3.11-dev \
  pip \
  ninja-build \
- glib-2.0-dev
+ glib-2.0-dev \
+ gawk \
+ rsync
 
 LABEL maintainer Stafford Horne <shorne@gmail.com>
 
@@ -38,6 +40,7 @@ ENV TEST_ENABLED=1
 ENV NOLIB_ENABLED=1
 ENV MUSL_ENABLED=1
 ENV NEWLIB_ENABLED=1
+ENV VENDOR=none
 
 # Make volume mount points for output + cache of tarballs
 RUN mkdir -p /opt/crosstool && mkdir -p /opt/crossbuild/cache

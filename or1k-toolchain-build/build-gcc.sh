@@ -25,6 +25,7 @@ GCC_TARBALL=$CACHE_DIR/`basename $GCC_URL`
 BINUTILS_TARBALL=$CACHE_DIR/`basename $BINUTILS_URL`
 GDB_TARBALL=$CACHE_DIR/`basename $GDB_URL`
 NEWLIB_TARBALL=$CACHE_DIR/`basename $NEWLIB_URL`
+GLIBC_TARBALL=$CACHE_DIR/`basename $GLIBC_URL`
 LINUX_HEADERS_TARBALL=$CACHE_DIR/`basename $LINUX_HEADERS_URL`
 GMP_TARBALL=$CACHE_DIR/`basename $GMP_URL`
 QEMU_TARBALL=$CACHE_DIR/`basename $QEMU_URL`
@@ -51,11 +52,11 @@ run_make_check()
 
   make -C ${gcc_dir} check-gcc
 
-  gzip -c gcc/testsuite/gcc/gcc.log > /opt/crosstool/${tag}-gcc-${version}.log.gz
-  cp gcc/testsuite/gcc/gcc.sum /opt/crosstool/${tag}-gcc-${version}.sum
+  xz -c ${gcc_dir}/gcc/testsuite/gcc/gcc.log > /opt/crosstool/${tag}-gcc-${version}.log.xz
+  cp    ${gcc_dir}/gcc/testsuite/gcc/gcc.sum   /opt/crosstool/${tag}-gcc-${version}.sum
   # Rename g++ to gxx for easier web urls
-  gzip -c gcc/testsuite/g++/g++.log > /opt/crosstool/${tag}-gxx-${version}.log.gz
-  cp gcc/testsuite/g++/g++.sum /opt/crosstool/${tag}-gxx-${version}.sum
+  xz -c ${gcc_dir}/gcc/testsuite/g++/g++.log > /opt/crosstool/${tag}-gxx-${version}.log.xz
+  cp    ${gcc_dir}/gcc/testsuite/g++/g++.sum   /opt/crosstool/${tag}-gxx-${version}.sum
 }
 gen_release_notes()
 {
@@ -75,6 +76,9 @@ gen_release_notes()
     fi
     if [ $MUSL_ENABLED ] ; then
       echo " - musl (linux-musl toolchain) : ${MUSL_VERSION}"
+    fi
+    if [ $GLIBC_ENABLED ] ; then
+      echo " - glibc (linux-gnu toolchain) : ${GLIBC_VERSION}"
     fi
     echo
     if [ $TEST_ENABLED ] ; then
@@ -173,13 +177,14 @@ if [ $MUSL_ENABLED ] ; then
         cp $tarball sources/
       done
 
-      PREFIX=/opt/crossbuild/output/or1k-linux-musl
+      TARGET=or1k-${VENDOR}-linux-musl
+      PREFIX=/opt/crossbuild/output/${TAGET}
 
       OLD_PATH=$PATH
       export PATH=$PREFIX/bin:$PATH
 
       cat <<EOF >config.mak
-TARGET = or1k-linux-musl
+TARGET = ${TARGET}
 BINUTILS_VER = ${BINUTILS_VERSION}
 GCC_VER = ${GCC_VERSION}
 MUSL_VER = ${MUSL_VERSION}
@@ -193,11 +198,11 @@ EOF
       if [ $TEST_ENABLED ] ; then
         # Fixup since ld-musl-or1k.so.1 links to /lib/libc.so which doesn't work
         # via qemu-or1k symlink resolution
-        pushd /opt/crossbuild/output/or1k-linux-musl/or1k-linux-musl/lib
+        pushd /opt/crossbuild/output/${TARGET}/lib
           ln -sf libc.so ld-musl-or1k.so.1
         popd
 
-        run_make_check "./build/local/or1k-linux-musl/obj_gcc/" "or1k-linux-musl"
+        run_make_check "./build/local/${TARGET}/obj_gcc/" "${TARGET}"
       fi
       export PATH=$OLD_PATH
     cd ..
@@ -240,5 +245,40 @@ if [ $NEWLIB_ENABLED ] ; then
   # Cleanup after build
   [ $SRC_CLEANUP ] && rm -rf elf
 fi
+
+if [ $GLIBC_ENABLED ] ; then
+  mkdir glibc; cd glibc
+    tar -xf $GCC_TARBALL
+    tar -xf $BINUTILS_TARBALL
+    tar -xf $LINUX_HEADERS_TARBALL
+    tar -xf $GLIBC_TARBALL
+
+    TARGET=or1k-${VENDOR}-linux-gnu
+    PREFIX=/opt/crossbuild/output/${TARGET}
+
+    OLD_PATH=$PATH
+    export PATH=$PREFIX/bin:$PATH
+
+    export NOTIFY=n
+    export INSTALLDIR=$PREFIX
+    export BUILDDIR=$PWD
+    export GCC_SRC=$BUILDDIR/gcc-${GCC_VERSION}
+    export BINUTILS_SRC=$BUILDDIR/binutils-${BINUTILS_VERSION}
+    export LINUX_SRC=$BUILDDIR/linux-${LINUX_HEADERS_VERSION}
+    export GLIBC_SRC=$BUILDDIR/glibc-${GLIBC_VERSION}
+    export CROSS=$TARGET
+    ../or1k-utils/toolchains/glibc.build
+    cat ./log/build.log
+
+    if [ $TEST_ENABLED ] ; then
+      run_make_check "./build-gcc" "${TARGET}"
+    fi
+    export PATH=$OLD_PATH
+  cd ..
+
+  # Cleanup after build
+  [ $SRC_CLEANUP ] && rm -rf glibc
+fi
+
 
 gen_release_notes
