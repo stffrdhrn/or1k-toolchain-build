@@ -230,7 +230,7 @@ if [ $NEWLIB_ENABLED ] ; then
     export NEWLIB_SRC=$BUILDDIR/newlib-${NEWLIB_VERSION}
 
     # build newlib plain and multicore variants
-    for target in or1k-elf or1k-elfmc; do
+    for target in or1k-elf or1k-${VENDOR}mc-elf; do
       PREFIX=/opt/crossbuild/output/${target}
 
       OLD_PATH=$PATH
@@ -268,7 +268,7 @@ if [ $GLIBC_ENABLED ] ; then
     export LINUX_SRC=$BUILDDIR/linux-${LINUX_HEADERS_VERSION}
     export GLIBC_SRC=$BUILDDIR/glibc-${GLIBC_VERSION}
 
-    for target in or1k-${VENDOR}-linux-gnu or1k-${VENDOR}-linux-gnuhf; do
+    for target in or1k-${VENDOR}-linux-gnu or1k-${VENDOR}hf-linux-gnu; do
       PREFIX=/opt/crossbuild/output/${target}
 
       OLD_PATH=$PATH
