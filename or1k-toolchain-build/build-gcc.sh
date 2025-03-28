@@ -282,82 +282,75 @@ fi
 # Build baremetal/newlib GCC
 
 if [ $NEWLIB_ENABLED ] ; then
-  mkdir elf; cd elf
+  # build newlib plain and multicore variants
+  for target in or1k-elf or1k-${VENDOR}mc-elf; do
+    mkdir $target; cd $target
 
-    archive_extract gcc ${GCC_VERSION}
-    archive_extract binutils ${BINUTILS_VERSION}
-    archive_extract newlib ${NEWLIB_VERSION}
-    archive_extract gdb ${GDB_VERSION}
+      archive_extract gcc ${GCC_VERSION}
+      archive_extract binutils ${BINUTILS_VERSION}
+      archive_extract newlib ${NEWLIB_VERSION}
+      archive_extract gdb ${GDB_VERSION}
 
-    # Setup overrides for newlib.config
-    export NOTIFY=n
-    export BUILDDIR=$PWD
-    export GCC_SRC=$(archive_src gcc ${GCC_VERSION})
-    export BINUTILS_SRC=$(archive_src binutils ${BINUTILS_VERSION})
-    export GDB_SRC=$(archive_src gdb ${GDB_VERSION})
-    export NEWLIB_SRC=$(archive_src newlib ${NEWLIB_VERSION})
-
-    # build newlib plain and multicore variants
-    for target in or1k-elf or1k-${VENDOR}mc-elf; do
       PREFIX=/opt/crossbuild/output/${target}
 
       OLD_PATH=$PATH
       export PATH=$PREFIX/bin:$PATH
 
-     # Setup target specific overrides for newlib.config
+      # Setup overrides for newlib.config
+      export NOTIFY=n
+      export BUILDDIR=$PWD
+      export GCC_SRC=$(archive_src gcc ${GCC_VERSION})
+      export BINUTILS_SRC=$(archive_src binutils ${BINUTILS_VERSION})
+      export GDB_SRC=$(archive_src gdb ${GDB_VERSION})
+      export NEWLIB_SRC=$(archive_src newlib ${NEWLIB_VERSION})
       export INSTALLDIR=$PREFIX
       export CROSS=${target}
       ../or1k-utils/toolchains/newlib.build
-      cat ./log/newlib-build.log
 
       if [ $TEST_ENABLED ] ; then
         run_make_check "./build-gcc" "${target}"
       fi
       export PATH=$OLD_PATH
-    done
-  cd ..
-
-  # Cleanup after build
-  [ $SRC_CLEANUP ] && rm -rf elf
+    cd ..
+    # Cleanup after build
+    [ $SRC_CLEANUP ] && rm -rf $target
+  done
 fi
 
 if [ $GLIBC_ENABLED ] ; then
-  mkdir glibc; cd glibc
-    archive_extract gcc ${GCC_VERSION}
-    archive_extract binutils ${BINUTILS_VERSION}
-    archive_extract linux ${LINUX_HEADERS_VERSION}
-    archive_extract glibc ${GLIBC_VERSION}
+  for target in or1k-${VENDOR}-linux-gnu or1k-${VENDOR}hf-linux-gnu; do
+    mkdir ${target}; cd ${target}
 
-    # Setup overrides for glibc.config
-    export NOTIFY=n
-    export BUILDDIR=$PWD
-    export GCC_SRC=$(archive_src gcc ${GCC_VERSION})
-    export BINUTILS_SRC=$(archive_src binutils ${BINUTILS_VERSION})
-    export LINUX_SRC=$(archive_src linux ${LINUX_HEADERS_VERSION})
-    export GLIBC_SRC=$(archive_src glibc ${GLIBC_VERSION})
+      archive_extract gcc ${GCC_VERSION}
+      archive_extract binutils ${BINUTILS_VERSION}
+      archive_extract linux ${LINUX_HEADERS_VERSION}
+      archive_extract glibc ${GLIBC_VERSION}
 
-    for target in or1k-${VENDOR}-linux-gnu or1k-${VENDOR}hf-linux-gnu; do
       PREFIX=/opt/crossbuild/output/${target}
 
       OLD_PATH=$PATH
       export PATH=$PREFIX/bin:$PATH
 
-      # Setup target specific overrides for glibc.config
+      # Setup overrides for glibc.config
+      export NOTIFY=n
+      export BUILDDIR=$PWD
+      export GCC_SRC=$(archive_src gcc ${GCC_VERSION})
+      export BINUTILS_SRC=$(archive_src binutils ${BINUTILS_VERSION})
+      export LINUX_SRC=$(archive_src linux ${LINUX_HEADERS_VERSION})
+      export GLIBC_SRC=$(archive_src glibc ${GLIBC_VERSION})
       export INSTALLDIR=$PREFIX
       export CROSS=${target}
       ../or1k-utils/toolchains/glibc.build
-      cat ./log/build.log
 
       if [ $TEST_ENABLED ] ; then
         run_make_check "./build-gcc" "${target}"
       fi
       export PATH=$OLD_PATH
-    done
-  cd ..
+    cd ..
 
-  # Cleanup after build
-  [ $SRC_CLEANUP ] && rm -rf glibc
+    # Cleanup after build
+    [ $SRC_CLEANUP ] && rm -rf $target
+  done
 fi
-
 
 gen_release_notes

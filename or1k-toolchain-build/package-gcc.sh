@@ -15,9 +15,17 @@ package_dir()
 
 pushd /opt/crossbuild/output
   [ $NOLIB_ENABLED ] && package_dir "or1k-linux"
-  [ $NEWLIB_ENABLED ] && package_dir "or1k-elf"
   [ $MUSL_ENABLED ] && package_dir "or1k-${VENDOR}-linux-musl"
-  [ $GLIBC_ENABLED ] && package_dir "or1k-${VENDOR}-linux-gnu"
+  if [ $NEWLIB_ENABLED ] ; then
+    for target in or1k-elf or1k-${VENDOR}mc-elf; do
+      package_dir $target
+    done
+  fi
+  if [ $GLIBC_ENABLED ] ; then
+    for target in or1k-${VENDOR}-linux-gnu or1k-${VENDOR}hf-linux-gnu; do
+      package_dir $target
+    done
+  fi
   wait
 popd
 
