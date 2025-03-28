@@ -1,10 +1,10 @@
 # OpenRISC build and release scripts
 
 This project contains a set of scripts and docker images for building toolchain
-releases for the OpenRISC platform.  Once the builds are done it will upload
+releases for the OpenRISC platform.  Once the builds are done we upload
 release artifacts to [github](https://github.com/openrisc/or1k-gcc/releases).
 
-If you are not a release maintainer you probably don't need this.  You can just
+If you are not a release maintainer you probably don't need this.  You can get
 binaries from our release page mentioned above.
 
 ## Building the toolchain
@@ -95,6 +95,22 @@ released before an official release is made upstream. This is supported for:
    and saving output to the `/opt/crosstool` output volume.
  - `VENDOR` - (default `none`) the vendor name to use in the toolchain triplet. i.e. `or1k-none-linux-gnu`.
    Change this if you want to identify your release uniquely.
+
+## Choosing versions
+
+This tool is used for creating stable releases, at the moment we manually track stable
+releases and make releases periodically.  Watch for new releases for each project at:
+
+ * [GCC](https://gcc.gnu.org/releases.html) - Released 2 times a year during May and August
+ * [GNU Software releases](https://www.gnu.org/software/recent-releases.html) to track:
+    * GLIBC - releases about 2 times a year around January and July
+    * Binutils - releases about 2 times a year around the end of January and end of July
+    * GDB - releases about 2 times a year
+    * GMP - releases once every 2-3 years
+ * [Linux Kernel](https://kernel.org) - Used for linux headers we don't need to update too often.
+ * [MUSL libc](https://musl.libc.org/releases.html) - Releases about once a year.
+ * [newlib](https://sourceware.org/newlib/) - Releases about once a year in December.
+ * [QEMU](https://www.qemu.org) - Periodically released, used for running tests not part of toolchain.
 
 ## Signing your work
 

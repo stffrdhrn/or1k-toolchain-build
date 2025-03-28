@@ -182,7 +182,8 @@ if [ $TEST_ENABLED ] ; then
 
   QEMU_PREFIX=$PWD/or1k-qemu
   if [ ! -d "$QEMU_PREFIX" ] ; then
-    archive_exract qemu ${QEMU_VERSION}
+    archive_extract qemu ${QEMU_VERSION}
+
     mkdir qemu-${QEMU_VERSION}/build
     cd qemu-${QEMU_VERSION}/build
        ../../or1k-utils/qemu/config.qemu --prefix=$QEMU_PREFIX
