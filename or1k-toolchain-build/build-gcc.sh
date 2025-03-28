@@ -6,43 +6,117 @@ set -ex
 
 CACHE_DIR=/opt/crossbuild/cache/
 
-OR1K_GCC_URL=https://github.com/openrisc/or1k-gcc/archive/${GCC_VERSION}.tar.gz
-OR1K_BINUTILS_URL=https://github.com/openrisc/binutils-gdb/archive/${BINUTILS_VERSION}.tar.gz
-OR1K_NEWLIB_URL=https://github.com/openrisc/newlib/archive/${NEWLIB_VERSION}.tar.gz
-
-GNU_SITE=https://ftpmirror.gnu.org/gnu/
-GCC_URL=${GNU_SITE}/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.xz
-BINUTILS_URL=${GNU_SITE}/binutils/binutils-${BINUTILS_VERSION}.tar.xz
-GDB_URL=${GNU_SITE}/gdb/gdb-${GDB_VERSION}.tar.xz
-GMP_URL=${GNU_SITE}/gmp/gmp-${GMP_VERSION}.tar.xz
-GLIBC_URL=${GNU_SITE}/glibc/glibc-${GLIBC_VERSION}.tar.xz
-
-NEWLIB_URL=ftp://sourceware.org/pub/newlib/newlib-${NEWLIB_VERSION}.tar.gz
-LINUX_HEADERS_URL=https://cdn.kernel.org/pub/linux/kernel/v${LINUX_HEADERS_VERSION:0:1}.x/linux-${LINUX_HEADERS_VERSION}.tar.xz
-QEMU_URL=https://download.qemu.org/qemu-${QEMU_VERSION}.tar.xz
-
-GCC_TARBALL=$CACHE_DIR/`basename $GCC_URL`
-BINUTILS_TARBALL=$CACHE_DIR/`basename $BINUTILS_URL`
-GDB_TARBALL=$CACHE_DIR/`basename $GDB_URL`
-NEWLIB_TARBALL=$CACHE_DIR/`basename $NEWLIB_URL`
-GLIBC_TARBALL=$CACHE_DIR/`basename $GLIBC_URL`
-LINUX_HEADERS_TARBALL=$CACHE_DIR/`basename $LINUX_HEADERS_URL`
-GMP_TARBALL=$CACHE_DIR/`basename $GMP_URL`
-QEMU_TARBALL=$CACHE_DIR/`basename $QEMU_URL`
+OR1K_GITHUB_SITE=https://github.com/openrisc
+GNU_SITE=https://ftpmirror.gnu.org/gnu
+SOURCEWARE_SITE=ftp://sourceware.org/pub
+KERNEL_SITE=https://cdn.kernel.org/pub/linux/kernel
+QEMU_SITE=https://download.qemu.org/
 
 # Dates and version used for artifacts
 arc_date=`date -u +%Y%m%d`
 version="${GCC_VERSION}-${arc_date}"
 
+package_url()
+{
+  typeset pkg=$1 ; shift
+  typeset ver=$1 ; shift
+
+  if [[ $ver = or1k-* ]]; then
+    case $pkg in
+      gcc)          echo $OR1K_GITHUB_SITE/or1k-gcc/archive/${ver}.tar.gz ;;
+      glibc)        echo $OR1K_GITHUB_SITE/or1k-glibc/archive/${ver}.tar.gz ;;
+      binutils|gdb) echo $OR1K_GITHUB_SITE/binutils-gdb/archive/${ver}.tar.gz ;;
+      *)            echo $OR1K_GITHUB_SITE/${pkg}/archive/${ver}.tar.gz ;;
+    esac
+    return
+  fi
+
+  case $pkg in
+    newlib) echo $SOURCEWARE_SITE/${pkg}/${pkg}-${ver}.tar.gz ;;
+    linux)  echo $KERNEL_SITE/v${ver:0:1}.x/linux-${ver}.tar.xz ;;
+    qemu)   echo $QEMU_SITE/${pkg}-${ver}.tar.xz ;;
+    gcc)    echo $GNU_SITE/gcc/gcc-${ver}/gcc-${ver}.tar.xz ;;
+    # Fallback to gnu as most things are this!
+    *)      echo $GNU_SITE/${pkg}/${pkg}-${ver}.tar.xz ;;
+  esac
+}
+
+package_tarball()
+{
+  typeset pkg=$1 ; shift
+  typeset ver=$1 ; shift
+
+  typeset url=$(package_url $pkg $ver)
+  echo $CACHE_DIR/$(basename $url)
+}
+
 check_and_download()
 {
-  typeset url=$1 ; shift
+  typeset pkg=$1 ; shift
+  typeset ver=$1 ; shift
+
+  typeset url=$(package_url $pkg $ver)
 
   filename=`basename $url`
   if [ ! -f $CACHE_DIR/$filename ] ; then
     wget --directory-prefix=$CACHE_DIR $url
     sha1sum $CACHE_DIR/$filename > $CACHE_DIR/$filename.sha1
   fi
+}
+
+archive_src()
+{
+  typeset pkg=$1 ; shift
+  typeset ver=$1 ; shift
+
+  # For or1k versions we pull from github and the extracted archive
+  # is a bit different from the tarball, it includes the repo name.
+  if [[ $ver = or1k-* ]]; then
+    case $pkg in
+      gcc)          echo $PWD/or1k-gcc-${ver} ;;
+      glibc)        echo $PWD/or1k-glibc-${ver} ;;
+      binutils|gdb) echo $PWD/binutils-gdb-${ver} ;;
+      # newlib is normal
+      *)            echo $PWD/${pkg}-${ver} ;;
+    esac
+    return
+  fi
+
+  # All others are normal
+  echo $PWD/${pkg}-${ver}
+}
+
+archive_extract()
+{
+  typeset pkg=$1 ; shift
+  typeset ver=$1 ; shift
+
+  # First check if the archive is available, if not, get it
+  check_and_download $pkg $ver
+
+  typeset src=$(archive_src $pkg $ver)
+
+  # Next extract it to the current directory if we
+  # haven't already, may have been for binutils-gdb
+  if [ ! -d $src ] ; then
+    tar -xf $(package_tarball $pkg $ver)
+  fi
+}
+
+archive_copy()
+{
+  typeset pkg=$1 ; shift
+  typeset ver=$1 ; shift
+
+  # First check if the archive is available, if not, get it
+  check_and_download $pkg $ver
+
+  mkdir -p sources/
+  tarball=$(package_tarball $pkg $ver)
+
+  cp $tarball.sha1 hashes/
+  # Copy sources second so make thinks we downloaded after sha1
+  cp $tarball sources/
 }
 
 run_make_check()
@@ -58,6 +132,7 @@ run_make_check()
   xz -c ${gcc_dir}/gcc/testsuite/g++/g++.log > /opt/crosstool/${tag}-gxx-${version}.log.xz
   cp    ${gcc_dir}/gcc/testsuite/g++/g++.sum   /opt/crosstool/${tag}-gxx-${version}.sum
 }
+
 gen_release_notes()
 {
   {
@@ -95,14 +170,6 @@ gen_release_notes()
   } > /opt/crosstool/relnotes-${version}.md
 }
 
-check_and_download $GCC_URL
-check_and_download $BINUTILS_URL
-check_and_download $NEWLIB_URL
-check_and_download $GDB_URL
-check_and_download $GLIBC_URL
-check_and_download $LINUX_HEADERS_URL
-check_and_download $GMP_URL
-
 # Get latest build and config scripts
 
 if [ ! -d "or1k-utils" ] ; then
@@ -113,11 +180,9 @@ fi
 
 if [ $TEST_ENABLED ] ; then
 
-  check_and_download $QEMU_URL
-
   QEMU_PREFIX=$PWD/or1k-qemu
   if [ ! -d "$QEMU_PREFIX" ] ; then
-    tar -xf $QEMU_TARBALL
+    archive_exract qemu ${QEMU_VERSION}
     mkdir qemu-${QEMU_VERSION}/build
     cd qemu-${QEMU_VERSION}/build
        ../../or1k-utils/qemu/config.qemu --prefix=$QEMU_PREFIX
@@ -136,16 +201,20 @@ fi
 if [ $NOLIB_ENABLED ] ; then
   mkdir linux-nolib
   cd linux-nolib
-    tar -xf $GCC_TARBALL
-    tar -xf $BINUTILS_TARBALL
+    archive_extract gcc ${GCC_VERSION}
+    archive_extract binutils ${BINUTILS_VERSION}
+
+    GCC_SRC=$(archive_src gcc ${GCC_VERSION})
+    BINUTILS_SRC=$(archive_src binutils ${BINUTILS_VERSION})
+
     git clone https://github.com/stffrdhrn/buildall.git
     cd buildall
       make  # build the timer tool
 
       # create the buildall build config
       cat <<EOF >config
-BINUTILS_SRC=/opt/crossbuild/linux-nolib/binutils-${BINUTILS_VERSION}
-GCC_SRC=/opt/crossbuild/linux-nolib/gcc-${GCC_VERSION}
+BINUTILS_SRC=${BINUTILS_SRC}
+GCC_SRC=${GCC_SRC}
 PREFIX=/opt/crossbuild/output/or1k-linux
 EXTRA_BINUTILS_CONF=""
 EXTRA_GCC_CONF=""
@@ -168,14 +237,12 @@ if [ $MUSL_ENABLED ] ; then
   mkdir linux-musl; cd linux-musl
     git clone https://github.com/richfelker/musl-cross-make.git
     cd musl-cross-make
-      mkdir sources/
 
-      # Copy our cached tarballs and checksums
-      for tarball in $GCC_TARBALL $BINUTILS_TARBALL $GMP_TARBALL $LINUX_HEADERS_TARBALL; do
-        cp $tarball.sha1 hashes/
-        # Copy sources second so make thinks we downloaded after sha1
-        cp $tarball sources/
-      done
+      # Copy archive to sources/ and hash to hashes/
+      archive_copy gcc ${GCC_VERSION}
+      archive_copy binutils ${BINUTILS_VERSION}
+      archive_copy gmp ${GMP_VERSION}
+      archive_copy linux ${LINUX_HEADERS_VERSION}
 
       TARGET=or1k-${VENDOR}-linux-musl
       PREFIX=/opt/crossbuild/output/${TAGET}
@@ -216,18 +283,19 @@ fi
 
 if [ $NEWLIB_ENABLED ] ; then
   mkdir elf; cd elf
-    tar -xf $GCC_TARBALL
-    tar -xf $BINUTILS_TARBALL
-    tar -xf $NEWLIB_TARBALL
-    tar -xf $GDB_TARBALL
+
+    archive_extract gcc ${GCC_VERSION}
+    archive_extract binutils ${BINUTILS_VERSION}
+    archive_extract newlib ${NEWLIB_VERSION}
+    archive_extract gdb ${GDB_VERSION}
 
     # Setup overrides for newlib.config
     export NOTIFY=n
     export BUILDDIR=$PWD
-    export GCC_SRC=$BUILDDIR/gcc-${GCC_VERSION}
-    export BINUTILS_SRC=$BUILDDIR/binutils-${BINUTILS_VERSION}
-    export GDB_SRC=$BUILDDIR/gdb-${GDB_VERSION}
-    export NEWLIB_SRC=$BUILDDIR/newlib-${NEWLIB_VERSION}
+    export GCC_SRC=$(archive_src gcc ${GCC_VERSION})
+    export BINUTILS_SRC=$(archive_src binutils ${BINUTILS_VERSION})
+    export GDB_SRC=$(archive_src gdb ${GDB_VERSION})
+    export NEWLIB_SRC=$(archive_src newlib ${NEWLIB_VERSION})
 
     # build newlib plain and multicore variants
     for target in or1k-elf or1k-${VENDOR}mc-elf; do
@@ -255,18 +323,18 @@ fi
 
 if [ $GLIBC_ENABLED ] ; then
   mkdir glibc; cd glibc
-    tar -xf $GCC_TARBALL
-    tar -xf $BINUTILS_TARBALL
-    tar -xf $LINUX_HEADERS_TARBALL
-    tar -xf $GLIBC_TARBALL
+    archive_extract gcc ${GCC_VERSION}
+    archive_extract binutils ${BINUTILS_VERSION}
+    archive_extract linux ${LINUX_HEADERS_VERSION}
+    archive_extract glibc ${GLIBC_VERSION}
 
     # Setup overrides for glibc.config
     export NOTIFY=n
     export BUILDDIR=$PWD
-    export GCC_SRC=$BUILDDIR/gcc-${GCC_VERSION}
-    export BINUTILS_SRC=$BUILDDIR/binutils-${BINUTILS_VERSION}
-    export LINUX_SRC=$BUILDDIR/linux-${LINUX_HEADERS_VERSION}
-    export GLIBC_SRC=$BUILDDIR/glibc-${GLIBC_VERSION}
+    export GCC_SRC=$(archive_src gcc ${GCC_VERSION})
+    export BINUTILS_SRC=$(archive_src binutils ${BINUTILS_VERSION})
+    export LINUX_SRC=$(archive_src linux ${LINUX_HEADERS_VERSION})
+    export GLIBC_SRC=$(archive_src glibc ${GLIBC_VERSION})
 
     for target in or1k-${VENDOR}-linux-gnu or1k-${VENDOR}hf-linux-gnu; do
       PREFIX=/opt/crossbuild/output/${target}
