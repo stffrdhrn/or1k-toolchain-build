@@ -4,7 +4,10 @@ set -ex
 
 # Download anything missing
 
-CACHE_DIR=/opt/crossbuild/cache/
+BUILD_ROOT=/opt/crossbuild
+CACHE_DIR=${BUILD_ROOT}/cache
+OUTPUT_DIR=${BUILD_ROOT}/output
+PATCH_DIR=${BUILD_ROOT}/patches
 
 OR1K_GITHUB_SITE=https://github.com/openrisc
 GNU_SITE=https://ftpmirror.gnu.org/gnu
@@ -100,6 +103,13 @@ archive_extract()
   # haven't already, may have been for binutils-gdb
   if [ ! -d $src ] ; then
     tar -xf $(package_tarball $pkg $ver)
+
+    # Apply any patches
+    if [ -d ${PATCH_DIR}/${pkg} ] ; then
+       for patch in ${PATCH_DIR}/${pkg}/*.patch ; do
+         patch -d $src -p1 < $patch
+       done
+    fi
   fi
 }
 
@@ -216,7 +226,7 @@ if [ $NOLIB_ENABLED ] ; then
       cat <<EOF >config
 BINUTILS_SRC=${BINUTILS_SRC}
 GCC_SRC=${GCC_SRC}
-PREFIX=/opt/crossbuild/output/or1k-linux
+PREFIX=${OUTPUT_DIR}/or1k-linux
 EXTRA_BINUTILS_CONF=""
 EXTRA_GCC_CONF=""
 MAKEOPTS="$MAKEOPTS"
@@ -246,7 +256,7 @@ if [ $MUSL_ENABLED ] ; then
       archive_copy linux ${LINUX_HEADERS_VERSION}
 
       TARGET=or1k-${VENDOR}-linux-musl
-      PREFIX=/opt/crossbuild/output/${TAGET}
+      PREFIX=${OUTPUT_DIR}/${TAGET}
 
       OLD_PATH=$PATH
       export PATH=$PREFIX/bin:$PATH
@@ -266,7 +276,7 @@ EOF
       if [ $TEST_ENABLED ] ; then
         # Fixup since ld-musl-or1k.so.1 links to /lib/libc.so which doesn't work
         # via qemu-or1k symlink resolution
-        pushd /opt/crossbuild/output/${TARGET}/lib
+        pushd ${PREFIX}/lib
           ln -sf libc.so ld-musl-or1k.so.1
         popd
 
@@ -292,7 +302,7 @@ if [ $NEWLIB_ENABLED ] ; then
       archive_extract newlib ${NEWLIB_VERSION}
       archive_extract gdb ${GDB_VERSION}
 
-      PREFIX=/opt/crossbuild/output/${target}
+      PREFIX=${OUTPUT_DIR}/${target}
 
       OLD_PATH=$PATH
       export PATH=$PREFIX/bin:$PATH
@@ -327,7 +337,7 @@ if [ $GLIBC_ENABLED ] ; then
       archive_extract linux ${LINUX_HEADERS_VERSION}
       archive_extract glibc ${GLIBC_VERSION}
 
-      PREFIX=/opt/crossbuild/output/${target}
+      PREFIX=${OUTPUT_DIR}/${target}
 
       OLD_PATH=$PATH
       export PATH=$PREFIX/bin:$PATH

@@ -48,7 +48,7 @@ VOLUME ["/opt/crosstool", "/opt/crossbuild/cache"]
 
 WORKDIR /opt/crossbuild
 
-# precache sources is too slow
 COPY *.sh /opt/crossbuild/
+ADD patches /opt/crossbuild/patches
 
 CMD ./build-gcc.sh && ./package-gcc.sh
