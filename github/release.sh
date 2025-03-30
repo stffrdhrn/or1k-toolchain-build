@@ -2,15 +2,13 @@
 
 set -ex
 
-GCC_VERSION=12.0.1-20220210
-
 # The github originization we want to create the or1k-gcc release at
-GITHUB_ORG=openrisc
-GITHUB_PROJECT=or1k-gcc
+GITHUB_ORG=stffrdhrn
+GITHUB_PROJECT=or1k-toolchain-build
 # The remote we want to upload tags to on the remote repo
-GIT_REMOTE=openrisc
+GIT_REMOTE=origin
 # The location of your git repo
-GIT_HOME=$HOME/work/gnu-toolchain/gcc
+GIT_HOME=$HOME/work/docker/or1k-gcc-build
 
 # Dry run examples
 # GITHUB_ORG=stffrdhrn
@@ -22,50 +20,41 @@ pushd $DIR ; DIR=$PWD ; popd
 github_dir=${DIR}
 . ${DIR}/github.api
 
-if [ -z "$release" ] ; then
-  release=`date +%Y%m%d`
-fi
-
-# The local repo openrisc branch/tag, for generating the patch
-ref="or1k-${GCC_VERSION}"
-tag="or1k-${GCC_VERSION}-${release}"
-msg="OpenRISC ${GCC_VERSION}-${release} snapshot release source and binaries"
-
 # Create and push git tag
 git_tagnpush() {
-  declare ref=$1 ; shift
   declare tag=$1 ; shift
   declare remote=$1 ; shift
   declare msg=$1 ; shift
 
-  pushd $GIT_HOME
-    # check if the tag already exists at the destination, and return
-    git ls-remote --tags --refs $remote | grep -e "/$tag$" && return 0
+  # check if the tag already exists at the destination, and return
+  git -C ${GIT_HOME} ls-remote --tags --refs $remote | grep -e "/$tag$" && return 0
 
-    if ! git show-ref --heads --tags --quiet $ref ; then
-      echo "Failed when creating git tag, the ref $ref doesn't exist"
-      exit 1
-    fi
-    # If we got this far the tag does exist at the remote so create and push it
-    git tag -sf -m "$msg" $tag $ref
-    git push -f $remote $tag
-  popd
+  # If we got this far the tag does exist at the remote so create and push it
+  git -C ${GIT_HOME} tag -sf -m "$msg" $tag
+  git -C ${GIT_HOME} push -f $remote $tag
 }
 
 # Get commitish used by github release api
 git_getcommit() {
   declare ref=$1; shift
 
-  cd $GIT_HOME
-    git show-ref --heads --tags -s $ref
-  cd ..
+  git -C ${GIT_HOME} show-ref --heads --tags -s $ref
 }
 
-git_tagnpush ${ref} ${tag} ${GIT_REMOTE} "${msg}"
-commitish=`git_getcommit ${ref}`
+gcc_version=$1 ; shift
+if [[ -z $gcc_version ]] ; then
+  echo "usage: $0 <version>"
+  exit 1
+fi
+
+# The local repo openrisc branch/tag, for generating the patch
+tag="or1k-${gcc_version}"
+msg="OpenRISC ${gcc_version} snapshot release source and binaries"
+
+git_tagnpush ${tag} ${GIT_REMOTE} "${msg}"
+commitish=`git_getcommit ${tag}`
 
 # Create release
 github_release "${GITHUB_ORG}/${GITHUB_PROJECT}" \
   "${tag}" \
-  "${commitish}" \
   "${msg}"

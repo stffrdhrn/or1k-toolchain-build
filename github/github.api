@@ -1,7 +1,7 @@
 #!/bin/bash
 
 usage() {
-  echo "please define github_token or create ~/.github.api file and put it there before running"
+  echo "please define github_token and github_dir or create ~/.github.api file and put it there before running"
 
   exit 1
 }
@@ -10,11 +10,8 @@ usage() {
 if [[ -f $HOME/.github.api ]] ; then
   . $HOME/.github.api
 fi
-[[ -z $github_token ]]  && usage
-
-if [[ -z $github_dir ]] ; then
-  github_dir=`dirname $0`
-fi
+[[ -z $github_token ]] && usage
+[[ -z $github_dir ]] && usage
 
 ## Helpers
 
@@ -22,14 +19,27 @@ github_post() {
   declare json_file=$1; shift
   declare url=$1; shift
 
-  curl -H "Authorization: token $github_token" \
-    -H "Accept: application/vnd.github.v3+json" \
+  curl -v \
+    -H "Accept: application/vnd.github+json" \
+    -H "Authorization: Bearer ${github_token}" \
+    -H "X-GitHub-Api-Version: 2022-11-28" \
     -X POST \
     -d @${json_file} \
     -o ${github_dir}/post-out.json \
     "https://api.github.com${url}"
 
   return 0
+}
+
+github_get() {
+  declare url=$1; shift
+
+  curl -L \
+    -H "Accept: application/vnd.github+json" \
+    -H "Authorization: Bearer ${github_token}" \
+    -H "X-GitHub-Api-Version: 2022-11-28" \
+    -o ${github_dir}/get-out.json \
+    "https://api.github.com${url}"
 }
 
 github_upload() {
@@ -50,8 +60,10 @@ github_upload() {
     return 1
   fi
 
-  curl -H "Authorization: token $github_token" \
-    -H "Accept: application/vnd.github.v3+json" \
+  curl -v \
+    -H "Accept: application/vnd.github+json" \
+    -H "Authorization: Bearer ${github_token}" \
+    -H "X-GitHub-Api-Version: 2022-11-28" \
     -H "Content-Type: $mime" \
     -X POST \
     --data-binary @${data_file} \
@@ -64,13 +76,11 @@ github_upload() {
 github_release() {
   declare project=$1; shift
   declare name=$1; shift
-  declare commitish=$1; shift
   declare body=$1; shift
 
   cat >${github_dir}/release.json <<EOF
 {
   "tag_name": "${name}",
-  "target_commitish": "${commitish}",
   "name": "${name}",
   "body": "${body}",
   "draft": true,
