@@ -1,0 +1,30 @@
+diff --git a/gnulib/configure b/gnulib/configure
+index cc7e8287d5a..5d0aae35ec7 100755
+--- a/gnulib/configure
++++ b/gnulib/configure
+@@ -24017,6 +24017,7 @@ else
+   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ /* end confdefs.h.  */
+ #include <fcntl.h>
++#include <stdio.h>
+ 
+ 
+ $gl_mda_defines
+@@ -25703,6 +25704,17 @@ main ()
+ 
+     /* Try rmdir first, in case the chdir failed.  */
+     rmdir (DIR_NAME);
++    /* Getting rid of the very bottom dirs inside a Docker container is tricky */
++    if (chdir ("../../../..") < 0) exit (errno);
++    rename (DIR_NAME"/"DIR_NAME"/"DIR_NAME"/"DIR_NAME, "a");
++    rename (DIR_NAME"/"DIR_NAME"/"DIR_NAME, "b");
++    rename (DIR_NAME"/"DIR_NAME, "c");
++    rename (DIR_NAME, "d");
++    rmdir ("a");
++    rmdir ("b");
++    rmdir ("c");
++    rmdir ("d");
++    /* Now for the rest */
+     for (i = 0; i <= n_chdirs; i++)
+       {
+         if (chdir ("..") < 0)
