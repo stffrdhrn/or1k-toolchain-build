@@ -3,21 +3,22 @@
 set -ex
 
 # The github originization we want to create the or1k-gcc release at
-GITHUB_ORG=stffrdhrn
-GITHUB_PROJECT=or1k-toolchain-build
+GITHUB_ORG=${GITHUB_ORG:-openrisc}
+GITHUB_PROJECT=${GITHUB_PROJECT:-or1k-toolchain-build}
 # The remote we want to upload tags to on the remote repo
-GIT_REMOTE=origin
-# The location of your git repo
-GIT_HOME=$HOME/work/docker/or1k-gcc-build
+GIT_REMOTE=${GIT_REMOTE:-origin}
 
 # Dry run examples
 # GITHUB_ORG=stffrdhrn
-# GITHUB_PROJECT=gcc
+# GITHUB_PROJECT=or1k-toolchain-build
 # GIT_REMOTE=shorne
 
 DIR=`dirname $0`
 pushd $DIR ; DIR=$PWD ; popd
 github_dir=${DIR}
+# The location of the git repo
+GIT_HOME=`dirname ${github_dir}`
+
 . ${DIR}/github.api
 
 # Create and push git tag
