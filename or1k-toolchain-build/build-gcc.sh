@@ -256,7 +256,7 @@ if [ $MUSL_ENABLED ] ; then
       archive_copy linux ${LINUX_HEADERS_VERSION}
 
       TARGET=or1k-${VENDOR}-linux-musl
-      PREFIX=${OUTPUT_DIR}/${TAGET}
+      PREFIX=${OUTPUT_DIR}/${TARGET}
 
       OLD_PATH=$PATH
       export PATH=$PREFIX/bin:$PATH
