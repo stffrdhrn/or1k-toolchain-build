@@ -1,0 +1,28 @@
+From ce2e28ad5f966493d5535b266f48e0f18ff304b1 Mon Sep 17 00:00:00 2001
+From: Stafford Horne <shorne@gmail.com>
+Date: Sat, 5 Apr 2025 12:45:38 +0100
+Subject: [PATCH 2/2] litecross: Support OpenRISC when determining LINUX_ARCH
+
+OpenRISC toolchains are built with the or1k- prefix but the
+linux kernel arch directory is openrisc.  Add a patsubst clause
+to handle this translation.
+---
+ litecross/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/litecross/Makefile b/litecross/Makefile
+index 9cd691b..1912c1f 100644
+--- a/litecross/Makefile
++++ b/litecross/Makefile
+@@ -258,7 +258,7 @@ install-gcc: | obj_gcc/.lc_built
+ 
+ ifneq ($(LINUX_SRCDIR),)
+ TARGET_ARCH = $(firstword $(subst -, ,$(TARGET)))
+-TARGET_ARCH_MANGLED = $(patsubst i%86,x86,$(patsubst aarch64%,arm64%,$(TARGET_ARCH)))
++TARGET_ARCH_MANGLED = $(patsubst i%86,x86,$(patsubst aarch64%,arm64%,$(patsubst or1k,openrisc,$(TARGET_ARCH))))
+ LINUX_ARCH_LIST = $(sort $(notdir $(wildcard $(LINUX_SRCDIR)/arch/*)))
+ LINUX_ARCH = $(lastword $(foreach a,$(LINUX_ARCH_LIST),$(if $(filter $(a)%,$(TARGET_ARCH_MANGLED)),$(a))))
+ ifneq ($(LINUX_ARCH),)
+-- 
+2.47.0
+

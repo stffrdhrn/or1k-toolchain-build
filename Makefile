@@ -1,4 +1,4 @@
-.PHONY: image run run-bash
+.PHONY: image run run-bash help
 
 OUTPUTDIR      := $(HOME)/work/docker/volumes/crosstool
 CACHEDIR       := $(HOME)/work/docker/volumes/src
@@ -48,3 +48,17 @@ run:
 	$(DOCKER_RUN)
 run-bash:
 	$(DOCKER_RUN) bash
+
+help:
+	@echo "This is the helper file for running the toolchain build."
+	@echo "Run one of the targets:"
+	@echo
+	@echo "  - help  - prints this help"
+	@echo "  - image - builds the docker image and default volume directories."
+	@echo "  - run   - runs the docker image"
+	@echo
+	@echo "Configured setup:"
+	@echo "  DOCKER:     $(DOCKER)"
+	@echo "  DOCKER_RUN: $(DOCKER_RUN)"
+	@echo "  OUTPUTDIR:  $(OUTPUTDIR)"
+	@echo "  DOCKER_RUN: $(CACHEDIR)"

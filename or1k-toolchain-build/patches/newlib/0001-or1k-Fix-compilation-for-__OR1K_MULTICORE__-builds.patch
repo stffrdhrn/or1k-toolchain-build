@@ -1,0 +1,60 @@
+From 8696bfa7185a68031179589a1f096d28c084a737 Mon Sep 17 00:00:00 2001
+From: Stafford Horne <shorne@gmail.com>
+Date: Fri, 28 Mar 2025 10:00:55 +0000
+Subject: [PATCH] or1k: Fix compilation for __OR1K_MULTICORE__ builds
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+When building newlib for multicore environments we specify __OR1K_MULTICORE__
+which switches the build to allocate one struct _or1k_reent per CPU
+dynamiocally.
+
+This was using a strange definition of (*_or1k_reent)[], and causing
+the following compiler error:
+
+    ./gnu-toolchain/newlib/libgloss/or1k/impure.c: In function ‘_or1k_reent_init’:
+    ./gnu-toolchain/newlib/libgloss/or1k/impure.c:121:21: error: assignment to ‘struct ..
+      121 |         _or1k_reent = (struct _or1k_reent*) _sbrk_r(0, memsize);
+	  |
+
+Fix this compiler error by changing the or1k_reent definition to a pointer
+to structs.
+
+Signed-off-by: Stafford Horne <shorne@gmail.com>
+---
+ libgloss/or1k/impure.c         | 2 +-
+ libgloss/or1k/or1k-internals.h | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/libgloss/or1k/impure.c b/libgloss/or1k/impure.c
+index e94fd637c..7780c9170 100644
+--- a/libgloss/or1k/impure.c
++++ b/libgloss/or1k/impure.c
+@@ -108,7 +108,7 @@ _or1k_libc_getreent(void) {
+ }
+ 
+ #ifdef __OR1K_MULTICORE__
+-struct _or1k_reent (*_or1k_reent)[];
++struct _or1k_reent *_or1k_reent;
+ #else
+ struct _or1k_reent _or1k_reent;
+ #endif
+diff --git a/libgloss/or1k/or1k-internals.h b/libgloss/or1k/or1k-internals.h
+index 3aabdb05d..d92c16699 100644
+--- a/libgloss/or1k/or1k-internals.h
++++ b/libgloss/or1k/or1k-internals.h
+@@ -55,8 +55,8 @@ struct _or1k_reent {
+ 
+ 
+ #ifdef __OR1K_MULTICORE__
+-extern struct _or1k_reent (*_or1k_reent)[];
+-#define OR1K_REENT (*_or1k_reent)[or1k_coreid()]
++extern struct _or1k_reent *_or1k_reent;
++#define OR1K_REENT _or1k_reent[or1k_coreid()]
+ #else
+ extern struct _or1k_reent _or1k_reent;
+ #define OR1K_REENT _or1k_reent
+-- 
+2.47.0
+

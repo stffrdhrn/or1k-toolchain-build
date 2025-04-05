@@ -89,6 +89,18 @@ archive_src()
   echo $PWD/${pkg}-${ver}
 }
 
+archive_src_patch()
+{
+  typeset dir=$1 ; shift
+  typeset pkg=$1 ; shift
+
+  if [ -d ${PATCH_DIR}/${pkg} ] ; then
+     for patch in ${PATCH_DIR}/${pkg}/*.patch ; do
+       patch -d $dir -p1 < $patch
+     done
+  fi
+}
+
 archive_extract()
 {
   typeset pkg=$1 ; shift
@@ -105,11 +117,7 @@ archive_extract()
     tar -xf $(package_tarball $pkg $ver)
 
     # Apply any patches
-    if [ -d ${PATCH_DIR}/${pkg} ] ; then
-       for patch in ${PATCH_DIR}/${pkg}/*.patch ; do
-         patch -d $src -p1 < $patch
-       done
-    fi
+    archive_src_patch $src $pkg
   fi
 }
 
@@ -247,6 +255,7 @@ fi
 if [ $MUSL_ENABLED ] ; then
   mkdir linux-musl; cd linux-musl
     git clone https://github.com/richfelker/musl-cross-make.git
+    archive_src_patch musl-cross-make musl-cross-make
     cd musl-cross-make
 
       # Copy archive to sources/ and hash to hashes/
