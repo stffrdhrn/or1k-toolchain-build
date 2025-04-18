@@ -1,4 +1,4 @@
-.PHONY: image run run-bash help
+.PHONY: image run run-debug help
 
 OUTPUTDIR      := $(HOME)/work/docker/volumes/crosstool
 CACHEDIR       := $(HOME)/work/docker/volumes/src
@@ -8,6 +8,7 @@ GLIBC_ENABLED  := 1
 NEWLIB_ENABLED := 1
 NOLIB_ENABLED  := 1
 TEST_ENABLED   := 1
+SRC_CLEANUP    := 1
 
 # Use default versions from docker
 GCC_VERSION           :=
@@ -37,28 +38,32 @@ DOCKER_RUN := $(DOCKER) run -it --rm \
  -e NEWLIB_ENABLED=$(NEWLIB_ENABLED) \
  -e NOLIB_ENABLED=$(NOLIB_ENABLED) \
  -e TEST_ENABLED=$(TEST_ENABLED) \
+ -e SRC_CLEANUP=$(SRC_CLEANUP) \
  $(VERSIONS) \
  -v $(OUTPUTDIR):/opt/crosstool:Z \
  -v $(CACHEDIR):/opt/crossbuild/cache:Z \
  or1k-toolchain-build
 
+pull:
+	$(DOCKER) image pull debian:latest
 image: or1k-toolchain-build/Dockerfile
 	$(DOCKER) build -t or1k-toolchain-build or1k-toolchain-build/
 run:
 	$(DOCKER_RUN)
-run-bash:
+run-debug:
 	$(DOCKER_RUN) bash
-
 help:
 	@echo "This is the helper file for running the toolchain build."
 	@echo "Run one of the targets:"
 	@echo
-	@echo "  - help  - prints this help"
-	@echo "  - image - builds the docker image and default volume directories."
-	@echo "  - run   - runs the docker image"
+	@echo "  - help      - prints this help"
+	@echo "  - pull      - pull upstream image for an refreshed image build."
+	@echo "  - image     - builds the docker image and default volume directories."
+	@echo "  - run       - runs the docker image"
+	@echo "  - run-debug - runs the docker image in interactive mode"
 	@echo
 	@echo "Configured setup:"
 	@echo "  DOCKER:     $(DOCKER)"
 	@echo "  DOCKER_RUN: $(DOCKER_RUN)"
 	@echo "  OUTPUTDIR:  $(OUTPUTDIR)"
-	@echo "  DOCKER_RUN: $(CACHEDIR)"
+	@echo "  CACHEDIR:   $(CACHEDIR)"

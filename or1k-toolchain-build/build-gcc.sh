@@ -191,7 +191,7 @@ gen_release_notes()
 # Get latest build and config scripts
 
 if [ ! -d "or1k-utils" ] ; then
-  git clone https://github.com/stffrdhrn/or1k-utils.git
+  git clone --depth=1 https://github.com/stffrdhrn/or1k-utils.git
 fi
 
 # Setup testing infra
@@ -236,12 +236,18 @@ BINUTILS_SRC=${BINUTILS_SRC}
 GCC_SRC=${GCC_SRC}
 PREFIX=${OUTPUT_DIR}/or1k-linux
 EXTRA_BINUTILS_CONF=""
-EXTRA_GCC_CONF=""
+EXTRA_GCC_CONF="--disable-multilib --disable-lto"
 MAKEOPTS="$MAKEOPTS"
 CHECKING=release
 ECHO=/bin/echo
 EOF
 
+      common_flags="-O2"
+
+      CFLAGS="$common_flags" \
+      CFLAGS_FOR_TARGET="$common_flags" \
+      CXXFLAGS="$common_flags" \
+      CXXFLAGS_FOR_TARGET="$common_flags" \
       ./build --toolchain openrisc
     cd ..
   cd ..
@@ -276,6 +282,9 @@ BINUTILS_VER = ${BINUTILS_VERSION}
 GCC_VER = ${GCC_VERSION}
 MUSL_VER = ${MUSL_VERSION}
 LINUX_VER = ${LINUX_HEADERS_VERSION}
+
+COMMON_CONFIG += CFLAGS="-O2" CXXFLAGS="-O2"
+GCC_CONFIG += --disable-lto
 
 OUTPUT = ${PREFIX}
 EOF
