@@ -1,8 +1,8 @@
-# OpenRISC build and release scripts
+# OpenRISC toolchain build and release scripts
 
 This project contains a set of scripts and docker images for building toolchain
 releases for the OpenRISC platform.  Once the builds are done we upload
-release artifacts to [github](https://github.com/openrisc/or1k-gcc/releases).
+release artifacts to [github](https://github.com/stffrdhrn/or1k-toolchain-build/releases).
 
 If you are not a release maintainer you probably don't need this.  You can get
 binaries from our release page mentioned above.
@@ -46,6 +46,42 @@ docker run -it --rm \
   -v ${OUTPUTDIR}:/opt/crosstool:Z \
   -v ${CACHEDIR}:/opt/crossbuild/cache:Z \
   or1k-toolchain-build
+```
+
+## Building using make
+
+There is also a `make` wrapper available to help with all of the above. To build the
+image and run the build we can also do:
+
+```
+make image run
+```
+
+Or if we want to override certain variables with can do:
+
+```
+make QEMU_VERSION=9.1.3 TEST_ENABLED= run
+```
+
+Check out `make help` for more details.
+
+```
+$ make help
+
+This is the helper file for running the toolchain build.
+Run one of the targets:
+
+  - help      - prints this help
+  - pull      - pull upstream image for an refreshed image build.
+  - image     - builds the docker image and default volume directories.
+  - run       - runs the docker image
+  - run-debug - runs the docker image in interactive mode
+
+Configured setup:
+  DOCKER:     podman
+  DOCKER_RUN: podman run -it --rm -e MUSL_ENABLED=1 -e GLIBC_ENABLED=1 -e NEWLIB_ENABLED=1 -e NOLIB_ENABLED=1 -e TEST_ENABLED=1 -e SRC_CLEANUP=1  -v /home/shorne/work/docker/volumes/crosstool:/opt/crosstool:Z -v /home/shorne/work/docker/volumes/src:/opt/crossbuild/cache:Z or1k-toolchain-build
+  OUTPUTDIR:  /home/oruser/work/docker/volumes/crosstool
+  CACHEDIR:   /home/oruser/work/docker/volumes/src
 ```
 
 ## Environment Parameters
