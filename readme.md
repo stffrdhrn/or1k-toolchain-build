@@ -96,21 +96,21 @@ You can disable builds by undefining any of these variables, by default all
 builds are enabled.
  - `NEWLIB_ENABLED` - (default `1`) enable/disable the newlib build
  - `NOLIB_ENABLED` - (default `1`) enable/disable the nolib build
- - `MUSL_ENABLED` - (default `1) enable/disable the musl build
+ - `MUSL_ENABLED` - (default `1`) enable/disable the musl build
 
 ### Changing Versions
 
 The source versions of components pulled into the toolchain can be adjusted.
 
- - `GCC_VERSION` - (default `14.2.0`) version downloaded from: https://ftpmirror.gnu.org/gnu/gcc/gcc-14.2.0/gcc-14.2.0.tar.xz
- - `BINUTILS_VERSION` - (default `2.43.1`) version downloaded from: https://ftpmirror.gnu.org/gnu//binutils/binutils-2.43.1.tar.xz
- - `NEWLIB_VERSION` - (default `4.5.0.20241231`) version downloaded from: ftp://sourceware.org/pub/newlib/newlib-4.5.0.20241231.tar.xz
- - `GDB_VERSION` - (default `16.2`) version downloaded from: https://ftpmirror.gnu.org/gnu/gdb/gdb-16.2.tar.xz
- - `GLIBC_VERSION` - (default `2.41`) version downloaded from: https://ftpmirror.gnu.org/gnu/glibc/glibc-2.41.tar.xz
- - `MUSL_VERSION` - (default `1.2.5`) version of musl downloaded from: https://musl.libc.org/releases/musl-1.2.5.tar.gz
- - `LINUX_HEADERS_VERSION` - (default `6.13.8`) version of linux kernel, used for headers, downloaded from: https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.13.8.tar.xz
- - `GMP_VERSION` - (default `6.3.0`) version of GNU Multiple Precision Arithmetic Library (GMP) downloaded from: https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz
- - `QEMU_VERSION` - (default `9.2.2`) version of QEMU for running tests downloaded from: https://download.qemu.org/qemu-9.2.2.tar.xz
+ - `GCC_VERSION` - (default `15.1.0`) version downloaded from: https://ftpmirror.gnu.org/gnu/gcc/
+ - `BINUTILS_VERSION` - (default `2.44`) version downloaded from: https://ftpmirror.gnu.org/gnu//binutils/
+ - `NEWLIB_VERSION` - (default `4.5.0.20241231`) version downloaded from: http://sourceware.org/pub/newlib/
+ - `GDB_VERSION` - (default `16.3`) version downloaded from: https://ftpmirror.gnu.org/gnu/gdb/
+ - `GLIBC_VERSION` - (default `2.41`) version downloaded from: https://ftpmirror.gnu.org/gnu/glibc/
+ - `MUSL_VERSION` - (default `1.2.5`) version of musl downloaded from: https://musl.libc.org/releases/
+ - `LINUX_HEADERS_VERSION` - (default `6.13.8`) version of linux kernel, used for headers, downloaded from: https://cdn.kernel.org/pub/linux/kernel/
+ - `GMP_VERSION` - (default `6.3.0`) version of GNU Multiple Precision Arithmetic Library (GMP) downloaded from: https://gmplib.org/download/gmp/
+ - `QEMU_VERSION` - (default `9.2.4`) version of QEMU for running tests downloaded from: https://download.qemu.org/
 
 Git tags, special `or1k-{version}` versions allow downloading and building from
 OpenRISC development repo's.  This may be useful when a feature needs to be

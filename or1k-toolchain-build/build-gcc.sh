@@ -13,7 +13,7 @@ OR1K_GITHUB_SITE=https://github.com/openrisc
 GNU_SITE=https://ftpmirror.gnu.org/gnu
 SOURCEWARE_SITE=ftp://sourceware.org/pub
 KERNEL_SITE=https://cdn.kernel.org/pub/linux/kernel
-QEMU_SITE=https://download.qemu.org/
+QEMU_SITE=https://download.qemu.org
 
 # Dates and version used for artifacts
 arc_date=`date -u +%Y%m%d`
