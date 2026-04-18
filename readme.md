@@ -35,14 +35,15 @@ docker run -it --rm \
   -e GLIBC_ENABLED=1 \
   -e NEWLIB_ENABLED=1 \
   -e NOLIB_ENABLED=1 \
-  -e GCC_VERSION=14.2.0 \
-  -e BINUTILS_VERSION=2.43.1 \
-  -e NEWLIB_VERSION=4.5.0.20241231 \
-  -e GLIBC_VERSION=2.41 \
-  -e MUSL_VERSION=1.2.5 \
-  -e LINUX_HEADERS_VERSION=6.13.8 \
+  -e GCC_VERSION=15.2.0 \
+  -e BINUTILS_VERSION=2.46.0 \
+  -e NEWLIB_VERSION=4.6.0.20260123 \
+  -e GDB_VERSION=17.1 \
+  -e GLIBC_VERSION=2.43 \
+  -e MUSL_VERSION=1.2.6 \
+  -e LINUX_HEADERS_VERSION=6.18.22 \
   -e GMP_VERSION=6.3.0 \
-  -e QEMU_VERSION=9.2.2 \
+  -e QEMU_VERSION=11.0.0 \
   -v ${OUTPUTDIR}:/opt/crosstool:Z \
   -v ${CACHEDIR}:/opt/crossbuild/cache:Z \
   or1k-toolchain-build
@@ -60,7 +61,7 @@ make image run
 Or if we want to override certain variables with can do:
 
 ```
-make QEMU_VERSION=9.1.3 TEST_ENABLED= run
+make QEMU_VERSION=11.0.0 TEST_ENABLED= run
 ```
 
 Check out `make help` for more details.
@@ -102,15 +103,15 @@ builds are enabled.
 
 The source versions of components pulled into the toolchain can be adjusted.
 
- - `GCC_VERSION` - (default `15.1.0`) version downloaded from: https://ftpmirror.gnu.org/gnu/gcc/
- - `BINUTILS_VERSION` - (default `2.44`) version downloaded from: https://ftpmirror.gnu.org/gnu//binutils/
- - `NEWLIB_VERSION` - (default `4.5.0.20241231`) version downloaded from: http://sourceware.org/pub/newlib/
- - `GDB_VERSION` - (default `16.3`) version downloaded from: https://ftpmirror.gnu.org/gnu/gdb/
- - `GLIBC_VERSION` - (default `2.41`) version downloaded from: https://ftpmirror.gnu.org/gnu/glibc/
- - `MUSL_VERSION` - (default `1.2.5`) version of musl downloaded from: https://musl.libc.org/releases/
- - `LINUX_HEADERS_VERSION` - (default `6.13.8`) version of linux kernel, used for headers, downloaded from: https://cdn.kernel.org/pub/linux/kernel/
+ - `GCC_VERSION` - (default `15.2.0`) version downloaded from: https://ftpmirror.gnu.org/gnu/gcc/
+ - `BINUTILS_VERSION` - (default `2.46.0`) version downloaded from: https://ftpmirror.gnu.org/gnu//binutils/
+ - `NEWLIB_VERSION` - (default `4.6.0.20260123`) version downloaded from: http://sourceware.org/pub/newlib/
+ - `GDB_VERSION` - (default `17.1`) version downloaded from: https://ftpmirror.gnu.org/gnu/gdb/
+ - `GLIBC_VERSION` - (default `2.43`) version downloaded from: https://ftpmirror.gnu.org/gnu/glibc/
+ - `MUSL_VERSION` - (default `1.2.6`) version of musl downloaded from: https://musl.libc.org/
+ - `LINUX_HEADERS_VERSION` - (default `6.18.22`) version of linux kernel, used for headers, downloaded from: https://cdn.kernel.org/pub/linux/kernel/
  - `GMP_VERSION` - (default `6.3.0`) version of GNU Multiple Precision Arithmetic Library (GMP) downloaded from: https://gmplib.org/download/gmp/
- - `QEMU_VERSION` - (default `9.2.4`) version of QEMU for running tests downloaded from: https://download.qemu.org/
+ - `QEMU_VERSION` - (default `11.0.0`) version of QEMU for running tests downloaded from: https://download.qemu.org/
 
 Git tags, special `or1k-{version}` versions allow downloading and building from
 OpenRISC development repo's.  This may be useful when a feature needs to be

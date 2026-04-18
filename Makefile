@@ -8,7 +8,8 @@ GLIBC_ENABLED  := 1
 NEWLIB_ENABLED := 1
 NOLIB_ENABLED  := 1
 TEST_ENABLED   := 1
-SRC_CLEANUP    := 1
+# For saving space during build, but note rm is slow in overlayfs
+SRC_CLEANUP    :=
 
 # Use default versions from docker
 GCC_VERSION           :=

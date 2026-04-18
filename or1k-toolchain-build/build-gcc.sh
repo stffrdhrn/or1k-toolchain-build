@@ -14,6 +14,7 @@ GNU_SITE=https://ftpmirror.gnu.org/gnu
 SOURCEWARE_SITE=ftp://sourceware.org/pub
 KERNEL_SITE=https://cdn.kernel.org/pub/linux/kernel
 QEMU_SITE=https://download.qemu.org
+MUSL_SITE=https://musl.libc.org/releases
 
 # Dates and version used for artifacts
 arc_date=`date -u +%Y%m%d`
@@ -38,6 +39,7 @@ package_url()
     newlib) echo $SOURCEWARE_SITE/${pkg}/${pkg}-${ver}.tar.gz ;;
     linux)  echo $KERNEL_SITE/v${ver:0:1}.x/linux-${ver}.tar.xz ;;
     qemu)   echo $QEMU_SITE/${pkg}-${ver}.tar.xz ;;
+    musl)   echo $MUSL_SITE/${pkg}-${ver}.tar.gz ;;
     gcc)    echo $GNU_SITE/gcc/gcc-${ver}/gcc-${ver}.tar.xz ;;
     # Fallback to gnu as most things are this!
     *)      echo $GNU_SITE/${pkg}/${pkg}-${ver}.tar.xz ;;
@@ -261,7 +263,6 @@ fi
 if [ $MUSL_ENABLED ] ; then
   mkdir linux-musl; cd linux-musl
     git clone https://github.com/richfelker/musl-cross-make.git
-    archive_src_patch musl-cross-make musl-cross-make
     cd musl-cross-make
 
       # Copy archive to sources/ and hash to hashes/
@@ -269,6 +270,8 @@ if [ $MUSL_ENABLED ] ; then
       archive_copy binutils ${BINUTILS_VERSION}
       archive_copy gmp ${GMP_VERSION}
       archive_copy linux ${LINUX_HEADERS_VERSION}
+      # During gcc 15.2.0 musl 1.2.6 was not in hashes
+      archive_copy musl ${MUSL_VERSION}
 
       TARGET=or1k-${VENDOR}-linux-musl
       PREFIX=${OUTPUT_DIR}/${TARGET}
