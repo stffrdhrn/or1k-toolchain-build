@@ -153,6 +153,41 @@ run_make_check()
   cp    ${gcc_dir}/gcc/testsuite/g++/g++.sum   /opt/crosstool/${tag}-gxx-${version}.sum
 }
 
+build_gdb()
+{
+  typeset target=$1 ; shift
+  typeset prefix=$1 ; shift
+
+  archive_extract gdb ${GDB_VERSION}
+
+  mkdir gdb-${GDB_VERSION}/build
+  cd gdb-${GDB_VERSION}/build
+     ../configure \
+       --enable-initfini-array \
+       --enable-plugins \
+       --enable-tui \
+       --disable-binutils \
+       --disable-sim \
+       --disable-as \
+       --disable-ld \
+       --disable-doc \
+       --disable-gdbtk \
+       --disable-nls \
+       --without-x \
+       --without-debuginfod \
+       --without-debuginfod \
+       --with-libmpfr-type=static \
+       --with-libgmp-type=static \
+       --with-expat --with-libexpat-type=static \
+       --with-python=no \
+       --prefix=$prefix \
+       --target=$target
+     make $MAKEOPTS
+     make install
+     $prefix/bin/${target}-gdb --version
+  cd ../..
+}
+
 gen_release_notes()
 {
   {
@@ -294,6 +329,9 @@ EOF
       make $MAKEOPTS
       make install
 
+      # Build GDB for musl target
+      build_gdb $TARGET $PREFIX
+
       if [ $TEST_ENABLED ] ; then
         # Fixup since ld-musl-or1k.so.1 links to /lib/libc.so which doesn't work
         # via qemu-or1k symlink resolution
@@ -373,6 +411,9 @@ if [ $GLIBC_ENABLED ] ; then
       export INSTALLDIR=$PREFIX
       export CROSS=${target}
       ../or1k-utils/toolchains/glibc.build
+
+      # Build GDB for glibc target
+      build_gdb $target $PREFIX
 
       if [ $TEST_ENABLED ] ; then
         run_make_check "./build-gcc" "${target}"
