@@ -125,7 +125,7 @@ released before an official release is made upstream. This is supported for:
 
 ### Misc Parameters
 
- - `SRC_CLEANUP` - (default `1`) enable/disable deleting of source after build
+ - `SRC_CLEANUP` - (default `none`) enable/disable deleting of source after build
    completes.  Disable this if you are debugging a toolchain build issue.  Enable
    if if you are trying to save disk space during the build.
  - `TEST_ENABLED` - (default `1`) enable/disable dejagnu tesing of toolchains
@@ -167,8 +167,9 @@ sha256sum or1k-linux-musl-5.4.0-20170202.tar* | gpg --output sha256sums.asc --cl
 This is specifically for OpenRISC maintainers.  The scripts in `github/` can
 be used to create a release and upload all of the binary artifacts to github.
 
-First setups a `~/.github.api` with a github api token defined in
-`github_token`. i.e.
+First create a fine grained personal access token `User Profile > Settings > Developer Settings > Personal access tokens > Fine-grained tokens`.
+Next, setup a `~/.github.api` with a github api token defined using
+`github_token`. e.g.
 
 ```
 # Github api file for the curl release utilities
@@ -178,7 +179,7 @@ github_token=TOKEN
 Next create a release
 
 ```
-./github/release.sh
+./github/release.sh VERSION
 ```
 
 Then upload your binaries, it will automatically upload to the last release
@@ -186,4 +187,11 @@ you built.
 
 ```
 ./github/upload.sh ../volume/crosstool/*.tar.*
+```
+
+Full example:
+
+```console
+GITHUB_ORG=stffrdhrn ./github/release.sh 15.2.0-20260425
+./github/upload.sh ../volumes/crosstool/*15.2.0-20260425.tar*
 ```
